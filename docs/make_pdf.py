@@ -445,7 +445,7 @@ def build_pdf():
     story.append(Paragraph('2. <b>Multi-Object Tracking:</b> Zhang, Y., et al. (2022). <i>ByteTrack: Multi-Object Tracking by Associating Every Detection Box</i>. ECCV 2022. <font color="#0066CC">https://arxiv.org/abs/2110.06864</font>', bullet_style))
     story.append(Paragraph('3. <b>Deep Metric Learning (FRS):</b> Deng, J., et al. (2019). <i>ArcFace: Additive Angular Margin Loss for Deep Face Recognition</i>. CVPR 2019. <font color="#0066CC">https://arxiv.org/abs/1801.07698</font>', bullet_style))
     story.append(Paragraph('4. <b>Government Directives:</b> MHA Comprehensive Integrated Border Management System (CIBMS) Vision Framework & SIH 2026 PS ID 26187.', bullet_style))
-    story.append(Paragraph('5. <b>Live Prototype Codebase:</b> GitHub: <font color="#0066CC">https://github.com/Sagar-jha7/Border-Surveillance-System</font> | Operational Dashboard running at <code>http://localhost:8000</code>.', bullet_style))
+    story.append(Paragraph('5. <b>Live Prototype Codebase:</b> GitHub: <font color="#0066CC">https://github.com/Alister007-arch/IBVAP-Border-Surveillance</font> | Operational Dashboard running at <code>http://localhost:8000</code>.', bullet_style))
 
     doc.build(story, canvasmaker=NumberedCanvas)
     print(f'PDF_GENERATED_SUCCESS: {PDF_PATH} ({PDF_PATH.stat().st_size / 1024:.1f} KB)')

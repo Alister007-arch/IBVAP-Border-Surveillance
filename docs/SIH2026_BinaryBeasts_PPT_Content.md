@@ -210,6 +210,6 @@
    * Portal Link: [https://www.sih.gov.in](https://www.sih.gov.in)
 
 6. **Working Codebase & Prototype Demonstration**:
-   * **GitHub Repository**: [https://github.com/Sagar-jha7/Border-Surveillance-System](https://github.com/Sagar-jha7/Border-Surveillance-System)
+   * **GitHub Repository**: [https://github.com/Alister007-arch/IBVAP-Border-Surveillance](https://github.com/Alister007-arch/IBVAP-Border-Surveillance)
    * **Local Live C2 Deployment**: `http://localhost:8000` (Tactical Video Analytics Console)
    * **Mobile Stream Gateway**: `https://[LAN-IP]:8443/phone_stream.html` (Secure Patrol Ingest)

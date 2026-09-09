@@ -1,132 +1,122 @@
-# Border Surveillance System
-An AI-Based Intelligent Video Analytics Platform for Border Surveillance using existing CCTV Infrastructure
+# IBVAP — Intelligent Border Video Analytics Platform
+
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Alister007--arch%2FIBVAP--Border--Surveillance-blue?style=flat&logo=github)](https://github.com/Alister007-arch/IBVAP-Border-Surveillance)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Vite + React](https://img.shields.io/badge/Frontend-React%20%7C%20TailwindCSS-cyan)](frontend/)
+[![YOLOv8](https://img.shields.io/badge/AI%20Model-YOLOv8%20%7C%20SAHI%20%7C%20MOG2-red)](https://ultralytics.com)
+
+> **Autonomous Multi-Tier Edge Surveillance & Threat Interception Platform**  
+> Designed for Border Security, Critical Perimeter Defense, and Real-Time Multi-Sensor Tactical Coordination.
+
 ---
-## Overview
 
-The Border Surveillance System is an intelligent video analytics platform designed to enhance border security by leveraging existing CCTV infrastructure. It combines cutting-edge AI and machine learning technologies to detect, track, and alert security personnel of potential threats and anomalies in real-time.
+## 🌟 Overview
 
-## Features
+**IBVAP (Intelligent Border Video Analytics Platform)** transforms off-the-shelf surveillance infrastructure (USB Webcams, IP RTSP streams, and field mobile smartphones) into a tactical edge surveillance network.
 
-- **Real-time Video Analysis**: Process live CCTV feeds in real-time using AI algorithms
-- **Object Detection & Tracking**: Automatically detect and track people, vehicles, and other objects of interest
-- **Anomaly Detection**: Identify suspicious activities and unusual patterns
-- **Multi-Camera Support**: Handle multiple CCTV feeds simultaneously
-- **Alert System**: Generate instant alerts for detected threats and anomalies
-- **Data Logging**: Comprehensive logging of events and incidents
-- **Web Dashboard**: User-friendly interface for monitoring and management
-- **Historical Analysis**: Review and analyze past incidents
+It integrates a 3-tier cascade detection pipeline, face recognition & automated license plate recognition (ANPR) watchlist synchronization, low-latency WebSocket streaming, and a mission-critical tactical HUD command dashboard.
 
-## Technology Stack
+---
 
-### Backend
-- **Python** - Core AI/ML algorithms, video processing, and backend services
-  - Computer Vision
-  - REST API
+## 🚀 Key Capabilities
 
-### Frontend
-- **JavaScript** - Interactive dashboard and user interface
-- **HTML/CSS**  - Web interface structure and styling
+### 1. 3-Tier Multi-Cascade AI Engine
+- **Tier-1 YOLOv8 Deep Inference**: High-precision detection of humans, vehicles, knives, and weapons with ByteTrack persistence.
+- **Tier-2 Native SAHI Sliced Airspace Inference**: Native 320x320 sliced inference over upper airspace coordinates to detect small, distant aerial threats (Drones, UAVs, Quadcopters) at 50–150m without shrinking down pixels.
+- **Tier-3 Adaptive MOG2 Motion Fallback**: Dynamic learning rate adaptation and shadow elimination to detect crawling infiltrators and camouflaged moving targets when thermal or optical contrast is low.
 
-## Getting Started
+### 2. Live FRS & ANPR Watchlist Synchronization
+- **Face Recognition**: 128-d / 512-d cosine similarity matching against registered targets with configurable matching thresholds.
+- **Target Tracking Isolation**: Strict bounding box tracking ID isolation prevents false-positive watchlist alarms when multiple civilians/bystanders are in frame.
+- **ANPR License Plate Matching**: Automated OCR detection against flagged vehicle databases.
+
+### 3. Anti-Flicker Hardware Video Stabilization
+- **Hardware Thread-Safe Capture**: DirectShow backend with hardware `MJPG` codec and `CAP_PROP_BUFFERSIZE = 1` prevents video lag.
+- **Thread Memory Buffer Clones**: Deep array copies eliminate OpenCV driver buffer tearing.
+- **Day/Night CLAHE Hysteresis**: 16-lux hysteresis margin (`60 ± 8.0` lux) prevents brightness flapping under variable ambient indoor or dawn/dusk lighting.
+- **Synchronous Browser Decoding**: `<img decoding="sync" loading="eager">` eliminates 1-frame black blinking in Chromium.
+
+### 4. Multi-Camera & Mobile Field Ingestion
+- **Dual-Port Architecture**: Port `8000` (HTTP Tactical Dashboard) + Port `8443` (Secure HTTPS Mobile Patrol Streamer).
+- **Mobile Field Patrol**: Mobile phones can stream live camera video directly over browser HTTPS (`/phone_stream.html?id=phone_1`) with zero app installation.
+- **IP CCTV RTSP Support**: Dynamic addition of RTSP / HTTP surveillance cameras from the dashboard.
+
+---
+
+## 🏗️ Architecture Overview
+
+```mermaid
+graph TD
+    A[CCTV / USB Webcam / Mobile Patrol] --> B[Video Ingestion & Hardware Buffer]
+    B --> C[NightSwitcher CLAHE Hysteresis]
+    C --> D1[Tier-1 YOLOv8 Detection]
+    C --> D2[Tier-2 SAHI Sliced Airspace]
+    C --> D3[Tier-3 Adaptive MOG2 Motion]
+    D1 & D2 & D3 --> E[Detection Merger & ByteTrack]
+    E --> F[Section Coordinator & Threat Engine]
+    F --> G[FRS & ANPR Watchlist Matcher]
+    G --> H[WebSocket Broadcast Manager]
+    H --> I[React + Tailwind Tactical HUD Dashboard]
+```
+
+---
+
+## 💻 Quick Start
 
 ### Prerequisites
+- Python 3.10+
+- Node.js 18+ (for frontend)
+- Webcam, IP camera, or test video file
 
-- Python 3.8 or higher
-- Node.js (for frontend development)
-- CCTV camera feeds or video files for testing
-- GPU support recommended (NVIDIA CUDA for faster processing)
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Alister007-arch/IBVAP-Border-Surveillance.git
+cd IBVAP-Border-Surveillance
+```
 
-### Installation
+### 2. Backend Setup
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Sagar-jha7/Border-Surveillance-System.git
-   cd Border-Surveillance-System
-   ```
+# Start the Dual-Port Surveillance Server
+python backend/run_server.py
+```
+- **HTTP Tactical Dashboard**: `http://localhost:8000`
+- **HTTPS Mobile Patrol Stream**: `https://<YOUR_LAN_IP>:8443/phone_stream.html`
 
-2. **Install Python dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 3. Frontend Setup (Development)
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-3. **Install frontend dependencies** (if applicable)
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
+---
 
-4. **Configure the system**
-   - Edit `config/config.json` with your camera feed URLs
-   - Set up database connections
-   - Configure alert parameters
+## 📡 API & WebSocket Specification
 
-### Usage
+| Endpoint | Protocol | Description |
+| :--- | :--- | :--- |
+| `http://localhost:8000` | HTTP | Tactical Mission Command Web Dashboard |
+| `https://localhost:8443/phone_stream.html` | HTTPS | Mobile Field Patrol Camera Streamer |
+| `ws://localhost:8000/ws/frames/{camera_id}` | WebSocket | Real-time 15 FPS JPEG Base64 Frame Feed |
+| `ws://localhost:8000/ws/alerts` | WebSocket | Priority Tactical Alert Dispatch Channel |
+| `GET /api/cameras` | HTTP REST | List active cameras & patrol nodes |
+| `POST /api/cameras` | HTTP REST | Dynamically add IP RTSP / USB camera feed |
+| `GET /api/watchlist` | HTTP REST | Query active terrorist / suspect watchlist |
+| `POST /api/watchlist` | HTTP REST | Register new subject with face photo |
 
-1. **Start the backend server**
-   ```bash
-   python app.py
-   ```
+---
 
-2. **Start the frontend server** (if separate)
-   ```bash
-   cd frontend
-   npm start
-   ```
+## 👤 Author & Maintainer
 
-3. **Access the dashboard**
-   - Open your browser and navigate to `http://localhost:3000` (or configured port)
-   - Log in with your credentials
-   - Add camera feeds and start monitoring
+- **Developer**: **Alister007-arch** (Divyanshu Kashyap)
+- **GitHub**: [@Alister007-arch](https://github.com/Alister007-arch)
+- **Repository**: [https://github.com/Alister007-arch/IBVAP-Border-Surveillance](https://github.com/Alister007-arch/IBVAP-Border-Surveillance)
 
-## Key Components
+---
 
-### Video Processing Engine
-- Handles real-time frame extraction from multiple CCTV feeds
-- Optimized for low-latency processing
-
-### AI Detection Models
-- Person detection and pose estimation
-- Vehicle classification and tracking
-- Anomaly detection algorithms
-
-### Alert Management
-- Configurable alert thresholds
-- Multi-channel notifications (email, SMS, in-app)
-- Alert logging and history
-
-### Web Dashboard
-- Real-time video stream visualization
-- Live alerts and notifications
-- Historical data analysis
-- System configuration and management
-
-## API Endpoints
-
-### Video Feeds
-- `GET /api/feeds` - List all camera feeds
-- `POST /api/feeds` - Add a new camera feed
-- `GET /api/feeds/{id}` - Get specific feed details
-
-### Detections
-- `GET /api/detections` - Retrieve detected objects and events
-- `GET /api/detections/{id}` - Get specific detection details
-
-### Alerts
-- `GET /api/alerts` - List all alerts
-- `POST /api/alerts/config` - Configure alert settings
-
-## Performance Metrics
-
-- **Processing Latency**: < 100ms per frame (GPU)
-- **Detection Accuracy**: 90%+ on standard datasets
-- **Concurrent Streams**: Support for multiple simultaneous feeds
-- **Uptime**: 24/7 monitoring capability
-
-## Security Considerations
-
-- Ensure CCTV feeds are accessed over secure connections (HTTPS/RTSP)
-- Use strong authentication credentials
-- Keep systems and dependencies updated
-- Implement access control and user authentication
-- Regular security audits recommended
+## 📄 License
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
