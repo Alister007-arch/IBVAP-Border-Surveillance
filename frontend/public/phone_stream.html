@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>IBVAP — Mobile Patrol Camera Ingestion</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #090d16;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .header { text-align: center; margin-bottom: 0.75rem; width: 100%; max-width: 480px; }
+    .badge-sub {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      margin-bottom: 0.35rem;
+    }
+    h1 { font-size: 1.25rem; color: #f8fafc; font-weight: 800; letter-spacing: -0.02em; }
+    p.sub { font-size: 0.8rem; color: #94a3b8; line-height: 1.35; margin-top: 0.2rem; }
+
+    /* Security Warning Banner */
+    .security-alert {
+      width: 100%; max-width: 480px;
+      background: linear-gradient(135deg, rgba(120, 53, 15, 0.3), rgba(180, 83, 9, 0.2));
+      border: 1.5px solid #f59e0b;
+      border-radius: 12px;
+      padding: 0.9rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+      animation: fadeIn 0.3s ease;
+    }
+    .alert-title {
+      color: #fbbf24;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .alert-desc {
+      color: #fde68a;
+      margin-bottom: 0.6rem;
+    }
+    .alert-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-alert {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f59e0b;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn-alert:hover { background: #d97706; }
+    .btn-alert-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid #f59e0b;
+      color: #fbbf24;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .help-box {
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid rgba(245, 158, 11, 0.3);
+      font-size: 0.75rem;
+      color: #fef3c7;
+      line-height: 1.45;
+    }
+    .help-box code {
+      background: rgba(0,0,0,0.5);
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 0.72rem;
+      word-break: break-all;
+    }
+    .help-box a { color: #38bdf8; text-decoration: underline; }
+
+    #status {
+      font-size: 0.82rem; padding: 0.45rem 1rem;
+      border-radius: 999px; margin-bottom: 0.75rem;
+      background: #1e293b; color: #94a3b8; font-weight: 600;
+      border: 1px solid #334155; transition: all 0.2s; text-align: center;
+      width: 100%; max-width: 480px;
+    }
+    #status.connected { background: #064e3b; color: #6ee7b7; border-color: #10b981; }
+    #status.error { background: #7f1d1d; color: #fca5a5; border-color: #ef4444; }
+    #status.warning { background: #78350f; color: #fde68a; border-color: #f59e0b; }
+
+    .video-container {
+      width: 100%; max-width: 480px; position: relative;
+      border-radius: 12px; overflow: hidden;
+      border: 2px solid #334155; margin-bottom: 0.75rem;
+      background: #000; aspect-ratio: 4/3;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+    }
+    video, #simCanvas {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    #hiddenCanvas { display: none; }
+
+    .hud-overlay {
+      position: absolute;
+      top: 8px; left: 8px; right: 8px;
+      display: flex; justify-content: space-between;
+      pointer-events: none;
+      font-family: monospace; font-size: 0.7rem;
+    }
+    .hud-chip {
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #131c2e; border: 1px solid #1e293b;
+      border-radius: 12px; padding: 0.9rem; width: 100%;
+      max-width: 480px; margin-bottom: 0.75rem;
+    }
+    label { font-size: 0.78rem; color: #94a3b8; display: block; margin-bottom: 0.35rem; font-weight: 600; }
+    
+    .preset-group {
+      display: flex; gap: 0.4rem; margin-bottom: 0.6rem; flex-wrap: wrap;
+    }
+    .btn-chip {
+      background: #1e293b; border: 1px solid #334155;
+      color: #cbd5e1; font-size: 0.72rem; padding: 0.35rem 0.65rem;
+      border-radius: 6px; cursor: pointer; font-weight: 600;
+      transition: all 0.15s;
+    }
+    .btn-chip.active {
+      background: #0284c7; border-color: #38bdf8; color: #fff;
+    }
+
+    input[type=text] {
+      width: 100%; padding: 0.55rem 0.75rem; border-radius: 8px;
+      border: 1px solid #334155; background: #090d16;
+      color: #f8fafc; font-size: 0.9rem; font-family: monospace;
+    }
+
+    .row-controls {
+      display: flex; gap: 0.5rem; margin-top: 0.5rem;
+    }
+    select {
+      flex: 1; padding: 0.45rem 0.5rem; border-radius: 8px;
+      border: 1px solid #334155; background: #090d16;
+      color: #f8fafc; font-size: 0.78rem; font-weight: 600;
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 480px; }
+    button.main-btn {
+      width: 100%; padding: 0.75rem 1rem; border: none; border-radius: 10px;
+      font-size: 0.95rem; cursor: pointer; font-weight: 700; transition: background 0.15s;
+    }
+    #btnStart { background: #0284c7; color: white; }
+    #btnStart:hover { background: #0369a1; }
+    #btnStop  { background: #dc2626; color: white; display: none; }
+    #btnStop:hover { background: #b91c1c; }
+    #btnSimulate { background: #1e293b; border: 1px solid #334155; color: #cbd5e1; font-size: 0.8rem; padding: 0.55rem; }
+    #btnSimulate:hover { background: #334155; color: white; }
+    #btnPhotoSnap { background: #0f766e; color: white; font-size: 0.8rem; padding: 0.55rem; }
+    #btnPhotoSnap:hover { background: #115e59; }
+
+    #fps-info {
+      font-size: 0.78rem; color: #38bdf8; margin-top: 0.5rem;
+      font-family: monospace; font-weight: 600; text-align: center;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="badge-sub">IBVAP Mobile Patrol Node</div>
+    <h1>Live Patrol Camera Streamer</h1>
+    <p class="sub">Connect this device to the Border Surveillance tactical grid in real time.</p>
+  </div>
+
+  <!-- Security / HTTPS Context Warning Banner -->
+  <div id="insecureWarning" style="display:none;" class="security-alert">
+    <div class="alert-title">
+      <span>⚠️</span>
+      <span>Browser Security: Camera Access Requires HTTPS</span>
+    </div>
+    <div class="alert-desc">
+      Modern mobile browsers (Chrome on Android & Safari on iOS) strictly block camera access on plain <code>http://192.168...</code> IP addresses.
+    </div>
+    <div class="alert-actions">
+      <a id="btnSwitchHttps" href="#" class="btn-alert">🔐 Open via Secure HTTPS</a>
+      <button type="button" class="btn-alert-outline" onclick="toggleHowToFix()">ℹ️ Local Wi-Fi Options</button>
+    </div>
+    <div id="howToFixLocal" style="display:none;" class="help-box">
+      <strong>Option 1 (Fastest — Cloud Tunnel):</strong> Open via our public HTTPS tunnel with a valid SSL certificate.<br><br>
+      <strong>Option 2 (Android Chrome Local Wi-Fi):</strong><br>
+      1. On your phone, open <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code><br>
+      2. Add: <code id="flagIpExample">http://192.168.1.3:8000</code><br>
+      3. Set to <strong>Enabled</strong> and tap <strong>Relaunch</strong>.<br><br>
+      <strong>Option 3 (Local HTTPS Port 8443):</strong> Open <a id="localHttpsLink" href="#">https://192.168.1.3:8443/phone_stream.html</a> and tap "Advanced &rarr; Proceed".
+    </div>
+  </div>
+
+  <div id="status">Initializing Camera System...</div>
+
+  <div class="video-container">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="simCanvas" style="display:none;"></canvas>
+    
+    <div class="hud-overlay">
+      <div id="hudId" class="hud-chip">UNIT: INIT</div>
+      <div id="hudMode" class="hud-chip">MODE: READY</div>
+    </div>
+  </div>
+  <canvas id="hiddenCanvas"></canvas>
+
+  <div class="card">
+    <label>Independent Camera Slot (Select slot for this phone):</label>
+    <div class="preset-group">
+      <button type="button" class="btn-chip active" id="btnSlotPhone1" onclick="selectPreset('phone_1')">📱 Phone 1</button>
+      <button type="button" class="btn-chip" id="btnSlotPhone2" onclick="selectPreset('phone_2')">📱 Phone 2</button>
+      <button type="button" class="btn-chip" id="btnSlotPhone3" onclick="selectPreset('phone_3')">📱 Phone 3</button>
+      <button type="button" class="btn-chip" id="btnSlotPhone4" onclick="selectPreset('phone_4')">📱 Phone 4</button>
+      <button type="button" class="btn-chip" onclick="generateNewRandomId()">🎲 Custom</button>
+    </div>
+    <div style="font-size:0.75rem; color:#38bdf8; margin-bottom:0.4rem; font-family:monospace;" id="slotStatusDesc">
+      ✓ Slot: phone_1 (Renders as separate camera feed on dashboard)
+    </div>
+    <input type="text" id="clientId" placeholder="e.g. phone_1" />
+
+    <div class="row-controls">
+      <select id="cameraFacing">
+        <option value="environment">📷 Rear Camera (Outward)</option>
+        <option value="user">🤳 Front Camera (Selfie)</option>
+      </select>
+      <select id="streamFps">
+        <option value="15">⚡ 15 FPS (Fast)</option>
+        <option value="10" selected>🚀 10 FPS (Balanced)</option>
+        <option value="6">🔋 6 FPS (Low Data)</option>
+      </select>
+      <select id="streamRes">
+        <option value="512x384" selected>⚡ 512x384 (Fast / Low-Lag)</option>
+        <option value="640x480">🎥 640x480 (Standard HD)</option>
+        <option value="384x288">🚀 384x288 (Ultra Speed)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Fallback Native Camera Photo Capture Input -->
+  <input type="file" id="photoCaptureInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoCapture(event)" />
+
+  <div class="controls">
+    <button id="btnStart" class="main-btn" onclick="startStream()">▶ Start Camera Stream</button>
+    <button id="btnStop" class="main-btn" onclick="stopStream()">⏹ Stop Stream</button>
+    <button id="btnPhotoSnap" class="main-btn" onclick="document.getElementById('photoCaptureInput').click()">📸 Snap & Transmit Photo (Fallback Mode)</button>
+    <button id="btnSimulate" class="main-btn" onclick="startSimulationStream()">🎥 Test / Simulated Stream (No Cam Required)</button>
+  </div>
+
+  <div id="fps-info"></div>
+
+  <script>
+    const video = document.getElementById('video');
+    const simCanvas = document.getElementById('simCanvas');
+    const simCtx = simCanvas.getContext('2d');
+    const hiddenCanvas = document.getElementById('hiddenCanvas');
+    const hiddenCtx = hiddenCanvas.getContext('2d');
+    const statusEl = document.getElementById('status');
+    const clientIdInput = document.getElementById('clientId');
+    const cameraFacingSelect = document.getElementById('cameraFacing');
+    const streamFpsSelect = document.getElementById('streamFps');
+    const hudId = document.getElementById('hudId');
+    const hudMode = document.getElementById('hudMode');
+    const fpsInfo = document.getElementById('fps-info');
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const btnSimulate = document.getElementById('btnSimulate');
+    const insecureWarning = document.getElementById('insecureWarning');
+    const btnSwitchHttps = document.getElementById('btnSwitchHttps');
+    const howToFixLocal = document.getElementById('howToFixLocal');
+    const flagIpExample = document.getElementById('flagIpExample');
+    const localHttpsLink = document.getElementById('localHttpsLink');
+
+    let stream = null;
+    let ws = null;
+    let streaming = false;
+    let isSimulating = false;
+    let isSending = false;
+    let wakeLock = null;
+    let transmitMode = 'http'; // 'ws' or 'http'
+    let framesSent = 0;
+    let t0 = 0;
+    let simAnimId = null;
+
+    const STREAM_WIDTH = 640;
+    const STREAM_HEIGHT = 480;
+    const QUALITY = 0.65;
+
+    // Check Secure Context on Load
+    function checkSecurityContext() {
+      const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      const isSecure = window.isSecureContext || location.protocol === 'https:' || isLocalhost;
+
+      if (!isSecure) {
+        insecureWarning.style.display = 'block';
+        flagIpExample.textContent = `${location.protocol}//${location.host}`;
+        localHttpsLink.href = `https://${location.hostname}:8443/phone_stream.html`;
+        localHttpsLink.textContent = `https://${location.hostname}:8443/phone_stream.html`;
+        
+        // Fetch server stream info for public HTTPS link
+        fetch('/api/mobile-stream-info')
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.https_url) {
+              btnSwitchHttps.href = data.https_url;
+            } else {
+              btnSwitchHttps.href = `https://${location.hostname}:8443/phone_stream.html`;
+            }
+          })
+          .catch(() => {
+            btnSwitchHttps.href = `https://${location.hostname}:8443/phone_stream.html`;
+          });
+      }
+    }
+
+    function toggleHowToFix() {
+      howToFixLocal.style.display = howToFixLocal.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // 1. Device ID Management (URL parameter > Next Server Slot > LocalStorage)
+    async function initDeviceId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlId = urlParams.get('id') || urlParams.get('unit') || urlParams.get('camera') || urlParams.get('slot');
+
+      if (urlId) {
+        selectPreset(urlId.toLowerCase().trim());
+        return;
+      }
+
+      // Check server for the next free phone slot so multiple phones never conflict
+      try {
+        const res = await fetch('/api/phone/next-slot');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.client_id) {
+            selectPreset(data.client_id);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not query next phone slot from backend:', e);
+      }
+
+      let saved = localStorage.getItem('ibvap_patrol_unit_id');
+      if (!saved || saved === 'phone_01' || saved === 'patrol_unit_1') {
+        const rand = Math.floor(Math.random() * 900) + 100;
+        saved = `phone_${rand}`;
+      }
+      selectPreset(saved);
+    }
+
+    function selectPreset(presetId) {
+      const cleanId = presetId.trim().replace(/\s+/g, '_').toLowerCase();
+      clientIdInput.value = cleanId;
+      localStorage.setItem('ibvap_patrol_unit_id', cleanId);
+      updateHud();
+
+      // Highlight active chip
+      document.querySelectorAll('.preset-group .btn-chip').forEach(b => {
+        b.classList.remove('active');
+        const txt = b.textContent.toLowerCase();
+        if (
+          (cleanId === 'phone_1' && txt.includes('phone 1')) ||
+          (cleanId === 'phone_2' && txt.includes('phone 2')) ||
+          (cleanId === 'phone_3' && txt.includes('phone 3')) ||
+          (cleanId === 'phone_4' && txt.includes('phone 4')) ||
+          (b.id === 'btnSlotPhone1' && cleanId === 'phone_1') ||
+          (b.id === 'btnSlotPhone2' && cleanId === 'phone_2') ||
+          (b.id === 'btnSlotPhone3' && cleanId === 'phone_3') ||
+          (b.id === 'btnSlotPhone4' && cleanId === 'phone_4')
+        ) {
+          b.classList.add('active');
+        }
+      });
+
+      const slotDesc = document.getElementById('slotStatusDesc');
+      if (slotDesc) {
+        slotDesc.textContent = `✓ Active Slot: ${cleanId} (Independent camera card on dashboard)`;
+      }
+    }
+
+    function generateNewRandomId() {
+      const rand = Math.floor(Math.random() * 900) + 100;
+      selectPreset(`phone_${rand}`);
+    }
+
+    function updateHud() {
+      const id = clientIdInput.value.trim() || 'phone_1';
+      hudId.textContent = `UNIT: ${id.toUpperCase()}`;
+    }
+
+    clientIdInput.addEventListener('input', () => {
+      selectPreset(clientIdInput.value);
+    });
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = cls || '';
+    }
+
+    // 2. Camera Access (With Secure Context & Legacy Fallbacks)
+    async function getCameraStream() {
+      const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      const isSecure = window.isSecureContext || location.protocol === 'https:' || isLocalhost;
+
+      if (!isSecure) {
+        insecureWarning.style.display = 'block';
+        throw new Error('Camera blocked by browser security: Mobile browsers require HTTPS. Please use the HTTPS link above or Chrome Flags.');
+      }
+
+      const facing = cameraFacingSelect.value;
+      const constraints = {
+        video: {
+          facingMode: { ideal: facing },
+          width: { ideal: STREAM_WIDTH },
+          height: { ideal: STREAM_HEIGHT }
+        },
+        audio: false
+      };
+
+      // Standard modern API
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (err) {
+          console.warn('Fallback to basic video constraints:', err);
+          return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+      }
+
+      // Legacy fallback (older Android WebViews)
+      const legacyGetUserMedia = (navigator.getUserMedia ||
+                                  navigator.webkitGetUserMedia ||
+                                  navigator.mozGetUserMedia ||
+                                  navigator.msGetUserMedia);
+
+      if (legacyGetUserMedia) {
+        return new Promise((resolve, reject) => {
+          legacyGetUserMedia.call(navigator, constraints, resolve, () => {
+            legacyGetUserMedia.call(navigator, { video: true }, resolve, reject);
+          });
+        });
+      }
+
+      throw new Error('Camera API not supported in this browser. Please use Chrome or Safari over HTTPS.');
+    }
+
+    // 3. Screen WakeLock
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn('WakeLock not acquired:', err);
+      }
+    }
+
+    // 4. Frame Streaming Engine
+    function scheduleNextFrame() {
+      if (!streaming) return;
+      const targetFps = parseInt(streamFpsSelect.value) || 8;
+      setTimeout(captureAndTransmit, 1000 / targetFps);
+    }
+
+    async function captureAndTransmit() {
+      if (!streaming) return;
+      if (isSending) { scheduleNextFrame(); return; }
+      isSending = true;
+
+      try {
+        let b64 = null;
+        const resParts = (document.getElementById('streamRes')?.value || '512x384').split('x');
+        const streamW = parseInt(resParts[0]) || 512;
+        const streamH = parseInt(resParts[1]) || 384;
+
+        if (isSimulating) {
+          b64 = simCanvas.toDataURL('image/jpeg', 0.55).split(',')[1];
+        } else if (video.videoWidth > 0) {
+          hiddenCanvas.width = streamW;
+          hiddenCanvas.height = streamH;
+          hiddenCtx.drawImage(video, 0, 0, streamW, streamH);
+          b64 = hiddenCanvas.toDataURL('image/jpeg', 0.55).split(',')[1];
+        }
+
+        if (b64) {
+          const clientId = clientIdInput.value.trim() || 'phone_01';
+
+          if (transmitMode === 'ws' && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(b64);
+            onFrameTransmitted();
+          } else {
+            // HTTP REST Frame Ingestion (Works through all proxies, tunnels & firewalls)
+            await sendFrameHttp(clientId, b64);
+          }
+        }
+      } catch (err) {
+        console.error('Frame error:', err);
+      } finally {
+        isSending = false;
+        scheduleNextFrame();
+      }
+    }
+
+    async function sendFrameHttp(clientId, b64) {
+      try {
+        const res = await fetch(`/api/phone/${encodeURIComponent(clientId)}/frame`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: b64, client_id: clientId, name: clientId }),
+        });
+        if (res.ok) {
+          onFrameTransmitted();
+        }
+      } catch (err) {
+        console.warn('HTTP frame post drop:', err);
+      }
+    }
+
+    function onFrameTransmitted() {
+      framesSent++;
+      const elapsed = (Date.now() - t0) / 1000;
+      if (elapsed > 0) {
+        const fps = (framesSent / elapsed).toFixed(1);
+        fpsInfo.textContent = `Streaming ${fps} FPS | ${framesSent} frames sent (${transmitMode.toUpperCase()})`;
+      }
+    }
+
+    // 5. Fallback Photo Capture Handler (When getUserMedia is unavailable)
+    function handlePhotoCapture(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const img = new Image();
+        img.onload = async () => {
+          hiddenCanvas.width = STREAM_WIDTH;
+          hiddenCanvas.height = STREAM_HEIGHT;
+          hiddenCtx.drawImage(img, 0, 0, STREAM_WIDTH, STREAM_HEIGHT);
+          const b64 = hiddenCanvas.toDataURL('image/jpeg', QUALITY).split(',')[1];
+          const clientId = clientIdInput.value.trim() || 'phone_01';
+
+          setStatus(`Transmitting snapshot for ${clientId}...`, 'warning');
+          await sendFrameHttp(clientId, b64);
+          setStatus(`🟢 Photo frame transmitted successfully!`, 'connected');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 6. Simulation Stream
+    let simAngle = 0;
+    function runSimulationLoop() {
+      if (!isSimulating) return;
+      simCanvas.width = STREAM_WIDTH;
+      simCanvas.height = STREAM_HEIGHT;
+
+      // Tactical grid background
+      simCtx.fillStyle = '#0f172a';
+      simCtx.fillRect(0, 0, STREAM_WIDTH, STREAM_HEIGHT);
+
+      // Grid lines
+      simCtx.strokeStyle = '#1e293b';
+      simCtx.lineWidth = 1;
+      for (let x = 0; x < STREAM_WIDTH; x += 40) {
+        simCtx.beginPath(); simCtx.moveTo(x, 0); simCtx.lineTo(x, STREAM_HEIGHT); simCtx.stroke();
+      }
+      for (let y = 0; y < STREAM_HEIGHT; y += 40) {
+        simCtx.beginPath(); simCtx.moveTo(0, y); simCtx.lineTo(STREAM_WIDTH, y); simCtx.stroke();
+      }
+
+      // Moving target
+      simAngle += 0.04;
+      const targetX = STREAM_WIDTH / 2 + Math.cos(simAngle) * (STREAM_WIDTH * 0.32);
+      const targetY = STREAM_HEIGHT / 2 + Math.sin(simAngle * 1.5) * (STREAM_HEIGHT * 0.25);
+
+      simCtx.fillStyle = '#38bdf8';
+      simCtx.beginPath();
+      simCtx.arc(targetX, targetY, 18, 0, Math.PI * 2);
+      simCtx.fill();
+      simCtx.strokeStyle = '#0284c7';
+      simCtx.lineWidth = 3;
+      simCtx.stroke();
+
+      // Tactical Crosshairs
+      simCtx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      simCtx.beginPath();
+      simCtx.moveTo(targetX - 30, targetY); simCtx.lineTo(targetX + 30, targetY);
+      simCtx.moveTo(targetX, targetY - 30); simCtx.lineTo(targetX, targetY + 30);
+      simCtx.stroke();
+
+      // HUD Text
+      simCtx.fillStyle = '#f8fafc';
+      simCtx.font = '14px monospace';
+      simCtx.fillText(`PATROL FEED: ${clientIdInput.value.toUpperCase()}`, 15, 25);
+      simCtx.fillStyle = '#38bdf8';
+      simCtx.font = '11px monospace';
+      simCtx.fillText(`UTC: ${new Date().toISOString()}`, 15, 45);
+      simCtx.fillText(`SIMULATED GPS: 32.7266 N, 74.8570 E`, 15, 62);
+
+      simAnimId = requestAnimationFrame(runSimulationLoop);
+    }
+
+    // 7. Start / Stop Actions
+    async function startStream() {
+      updateHud();
+      const clientId = clientIdInput.value.trim() || 'phone_01';
+      setStatus('Acquiring camera feed...', '');
+      isSimulating = false;
+      simCanvas.style.display = 'none';
+      video.style.display = 'block';
+
+      try {
+        stream = await getCameraStream();
+        video.srcObject = stream;
+        await video.play();
+        requestWakeLock();
+      } catch (err) {
+        setStatus(`Camera Error: ${err.message}`, 'error');
+        return;
+      }
+
+      beginStreaming(clientId);
+    }
+
+    function startSimulationStream() {
+      updateHud();
+      const clientId = clientIdInput.value.trim() || 'phone_01';
+      setStatus('Starting Simulated Patrol Camera...', '');
+      isSimulating = true;
+      video.style.display = 'none';
+      simCanvas.style.display = 'block';
+      runSimulationLoop();
+      beginStreaming(clientId);
+    }
+
+    function beginStreaming(clientId) {
+      streaming = true;
+      framesSent = 0;
+      t0 = Date.now();
+      btnStart.style.display = 'none';
+      btnSimulate.style.display = 'none';
+      btnStop.style.display = 'block';
+
+      tryWebSocket(clientId);
+      scheduleNextFrame();
+    }
+
+    function tryWebSocket(clientId) {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${proto}//${location.host}/ws/phone/${encodeURIComponent(clientId)}`;
+      
+      try {
+        ws = new WebSocket(wsUrl);
+        const wsTimeout = setTimeout(() => {
+          if (ws && ws.readyState !== WebSocket.OPEN) {
+            transmitMode = 'http';
+            hudMode.textContent = 'MODE: HTTP STREAM';
+            setStatus(`🟢 Streaming Live via HTTP as ${clientId}`, 'connected');
+          }
+        }, 2000);
+
+        ws.onopen = () => {
+          clearTimeout(wsTimeout);
+          transmitMode = 'ws';
+          hudMode.textContent = 'MODE: WEBSOCKET';
+          setStatus(`🟢 Streaming Live via WS as ${clientId}`, 'connected');
+        };
+
+        ws.onerror = () => {
+          transmitMode = 'http';
+          hudMode.textContent = 'MODE: HTTP STREAM';
+          setStatus(`🟢 Streaming Live via HTTP as ${clientId}`, 'connected');
+        };
+
+        ws.onclose = () => {
+          if (streaming) {
+            transmitMode = 'http';
+            hudMode.textContent = 'MODE: HTTP STREAM';
+            setStatus(`🟢 Streaming Live via HTTP as ${clientId}`, 'connected');
+          }
+        };
+      } catch (e) {
+        transmitMode = 'http';
+        hudMode.textContent = 'MODE: HTTP STREAM';
+        setStatus(`🟢 Streaming Live via HTTP as ${clientId}`, 'connected');
+      }
+    }
+
+    async function stopStream() {
+      streaming = false;
+      const clientId = clientIdInput.value.trim() || 'phone_01';
+
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      if (simAnimId) {
+        cancelAnimationFrame(simAnimId);
+        simAnimId = null;
+      }
+      isSimulating = false;
+      if (ws) {
+        try { ws.close(); } catch (e) {}
+        ws = null;
+      }
+      if (wakeLock) {
+        try { await wakeLock.release(); } catch (e) {}
+        wakeLock = null;
+      }
+
+      try {
+        await fetch(`/api/phone/${encodeURIComponent(clientId)}/stop`, { method: 'POST' });
+      } catch (e) {}
+
+      setStatus('Stream Stopped. Ready to Reconnect.', '');
+      hudMode.textContent = 'MODE: STOPPED';
+      fpsInfo.textContent = '';
+      btnStart.style.display = 'block';
+      btnSimulate.style.display = 'block';
+      btnStop.style.display = 'none';
+    }
+
+    // Initialize
+    checkSecurityContext();
+    initDeviceId();
+    setStatus('Ready to Stream (Tap button below)', '');
+  </script>
+</body>
+</html>

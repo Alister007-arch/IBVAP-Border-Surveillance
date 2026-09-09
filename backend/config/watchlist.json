@@ -1,0 +1,51 @@
+{
+  "suspect_plates": [
+    {
+      "plate": "JK02C9988",
+      "reason": "Suspected Infiltration Vehicle",
+      "priority": "RED"
+    },
+    {
+      "plate": "PB65X0007",
+      "reason": "Unregistered Border Corridor Transporter",
+      "priority": "AMBER"
+    },
+    {
+      "plate": "DL01AB1234",
+      "reason": "Stolen Reconnaissance Vehicle",
+      "priority": "RED"
+    },
+    {
+      "plate": "BSF01A1001",
+      "reason": "Authorized BSF Patrol Recon Jeep",
+      "priority": "BLUE"
+    }
+  ],
+  "suspect_faces": [
+    {
+      "id": "SUSP_4288",
+      "name": "divyanshu",
+      "priority": "RED",
+      "notes": "terrorist",
+      "photos": [
+        "/api/faces/SUSP_4288_9a43b9b4.jpg",
+        "/api/faces/SUSP_4288_b91a139a.jpg",
+        "/api/faces/SUSP_4288_09f38b8c.jpg",
+        "/api/faces/SUSP_4288_3310c066.jpg"
+      ],
+      "created_at": "2026-09-09T20:38:04.328Z"
+    },
+    {
+      "id": "SUSP_7234",
+      "name": "Ayush",
+      "priority": "RED",
+      "notes": "CM",
+      "photos": [
+        "/api/faces/SUSP_7234_35edc070.jpg",
+        "/api/faces/SUSP_7234_d3a8edc3.jpg",
+        "/api/faces/SUSP_7234_c2a2d3c6.jpg"
+      ],
+      "created_at": "2026-09-09T21:47:58.046Z"
+    }
+  ]
+}

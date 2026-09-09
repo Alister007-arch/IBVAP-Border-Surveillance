@@ -1,0 +1,10 @@
+{
+  "adjacency": {
+    "cam_01": [
+      {"neighbor": "cam_02", "travel_time_min_sec": 2, "travel_time_max_sec": 30}
+    ],
+    "cam_02": [
+      {"neighbor": "cam_01", "travel_time_min_sec": 2, "travel_time_max_sec": 30}
+    ]
+  }
+}
