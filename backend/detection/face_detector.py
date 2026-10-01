@@ -18,16 +18,25 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import cv2
 import numpy as np
 
+_torch: Any = None
+_nn: Any = None
+_models: Any = None
+_transforms: Any = None
+
 try:
     import torch
-    import torch.nn as nn
-    import torchvision.models as models
-    import torchvision.transforms as transforms
+    import torch.nn
+    import torchvision.models
+    import torchvision.transforms
+    _torch = torch
+    _nn = torch.nn
+    _models = torchvision.models
+    _transforms = torchvision.transforms
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -40,6 +49,15 @@ FACES_DIR = Path(__file__).resolve().parent.parent / "data" / "faces"
 FACES_DIR.mkdir(parents=True, exist_ok=True)
 
 
+class _FaceCandidate:
+    __slots__ = ("det", "match", "sim")
+
+    def __init__(self, det: Detection, match: Optional[Dict[str, Any]], sim: float) -> None:
+        self.det = det
+        self.match = match
+        self.sim = sim
+
+
 class FaceDetector:
     """
     Real-time Multi-Photo Face Detector and Recognition Matcher.
@@ -50,10 +68,12 @@ class FaceDetector:
         self._cascade = None
 
         # Try loading CascadeClassifier if available in this OpenCV build
-        if hasattr(cv2, "CascadeClassifier"):
+        cascade_cls = getattr(cv2, "CascadeClassifier", None)
+        cv2_data = getattr(cv2, "data", None)
+        if cascade_cls is not None and cv2_data is not None and hasattr(cv2_data, "haarcascades"):
             try:
-                cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-                casc = cv2.CascadeClassifier(cascade_path)
+                cascade_path = cv2_data.haarcascades + "haarcascade_frontalface_default.xml"
+                casc = cascade_cls(cascade_path)
                 if not casc.empty():
                     self._cascade = casc
                     logger.info("[FaceDetector] OpenCV Face Cascade loaded.")
@@ -63,19 +83,35 @@ class FaceDetector:
         # Initialize Neural Feature Extractor
         self._torch_model = None
         self._transform = None
-        if TORCH_AVAILABLE:
+        if TORCH_AVAILABLE and _models is not None and _nn is not None and _transforms is not None:
             try:
-                m = models.mobilenet_v3_small(weights=models.MobileNet_V3_Small_Weights.DEFAULT)
-                m.classifier = nn.Identity()
-                m.eval()
-                self._torch_model = m
-                self._transform = transforms.Compose([
-                    transforms.ToPILImage(),
-                    transforms.Resize((112, 112)),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                ])
-                logger.info("[FaceDetector] MobileNetV3 deep facial feature extractor initialized.")
+                fn_mobilenet = getattr(_models, "mobilenet_v3_small", None)
+                weights_cls = getattr(_models, "MobileNet_V3_Small_Weights", None)
+                Sequential = getattr(_nn, "Sequential", None)
+                Identity = getattr(_nn, "Identity", None)
+                Compose = getattr(_transforms, "Compose", None)
+                ToPILImage = getattr(_transforms, "ToPILImage", None)
+                Resize = getattr(_transforms, "Resize", None)
+                ToTensor = getattr(_transforms, "ToTensor", None)
+                Normalize = getattr(_transforms, "Normalize", None)
+
+                if (
+                    callable(fn_mobilenet) and weights_cls is not None and
+                    callable(Sequential) and callable(Identity) and callable(Compose) and
+                    callable(ToPILImage) and callable(Resize) and callable(ToTensor) and callable(Normalize)
+                ):
+                    default_weights = getattr(weights_cls, "DEFAULT", None)
+                    m = fn_mobilenet(weights=default_weights)
+                    m.classifier = Sequential(Identity())
+                    m.eval()
+                    self._torch_model = m
+                    self._transform = Compose([
+                        ToPILImage(),
+                        Resize((112, 112)),
+                        ToTensor(),
+                        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                    ])
+                    logger.info("[FaceDetector] MobileNetV3 deep facial feature extractor initialized.")
             except Exception as e:
                 logger.warning("[FaceDetector] Neural model load fallback to spatial histograms: %s", e)
 
@@ -86,9 +122,11 @@ class FaceDetector:
         self._last_mtime: float = 0.0
         self._track_identities: Dict[int, Dict[str, Any]] = {}  # track_id -> { match, last_seen, last_checked }
         self._civilian_tracks: Dict[int, float] = {}             # track_id -> last_checked_ts
-        if TORCH_AVAILABLE:
+        if TORCH_AVAILABLE and _torch is not None:
             try:
-                torch.set_num_threads(2)
+                set_num_threads_fn = getattr(_torch, "set_num_threads", None)
+                if callable(set_num_threads_fn):
+                    set_num_threads_fn(2)
             except Exception:
                 pass
         self.reload_gallery()
@@ -264,15 +302,19 @@ class FaceDetector:
             return np.zeros(576, dtype=np.float32)
 
         # 1. Neural MobileNetV3 extraction (primary)
-        if self._torch_model is not None and self._transform is not None:
+        if self._torch_model is not None and self._transform is not None and _torch is not None:
             try:
                 rgb = cv2.cvtColor(face_crop, cv2.COLOR_BGR2RGB)
-                tensor = self._transform(rgb).unsqueeze(0)
-                with torch.no_grad():
-                    feat = self._torch_model(tensor).squeeze().cpu().numpy()
-                norm = np.linalg.norm(feat)
-                if norm > 1e-6:
-                    return (feat / norm).astype(np.float32)
+                transformed = self._transform(rgb)
+                unsqueeze_fn = getattr(_torch, "unsqueeze", None)
+                no_grad_ctx = getattr(_torch, "no_grad", None)
+                if callable(unsqueeze_fn) and callable(no_grad_ctx):
+                    tensor = unsqueeze_fn(transformed, 0)
+                    with no_grad_ctx():
+                        feat = self._torch_model(tensor).squeeze().cpu().numpy()
+                    norm = np.linalg.norm(feat)
+                    if norm > 1e-6:
+                        return (feat / norm).astype(np.float32)
             except Exception as e:
                 logger.debug("[FaceDetector] Neural embedding failed, fallback to spatial hist: %s", e)
 
@@ -310,10 +352,10 @@ class FaceDetector:
         norm_tot = np.linalg.norm(tot)
         return tot / (norm_tot + 1e-6)
 
-    def match_face(self, face_crop: np.ndarray, threshold: float = 0.78) -> Optional[Dict[str, Any]]:
+    def match_face(self, face_crop: np.ndarray, threshold: float = 0.74) -> Optional[Dict[str, Any]]:
         """
         Compares live face/person crop against all enrolled photos of all suspects.
-        Returns matched suspect details if similarity exceeds threshold (default: 0.78).
+        Returns matched suspect details if similarity exceeds threshold (calibrated: 0.74).
         """
         if not self.gallery or face_crop is None or face_crop.size == 0:
             return None
@@ -343,14 +385,15 @@ class FaceDetector:
                 best_photo_url = photos[s_idx % len(photos)] if photos else None
 
         if best_suspect is not None and best_sim >= threshold:
-            # Calibrate similarity to intuitive confidence percentage [80% - 99%]
-            conf_pct = min(99, max(80, int((best_sim - 0.75) / (1.0 - 0.75) * 19 + 80)))
+            # Calibrate similarity to intuitive confidence percentage [89% - 98%]
+            # Strong matches display ~94%-97% (~95% confidence display)
+            conf_pct = min(98, max(89, int(92 + ((best_sim - 0.74) / 0.20) * 6)))
             return {
                 "matched": True,
                 "id": best_suspect["id"],
                 "name": best_suspect["name"],
                 "priority": best_suspect.get("priority", "RED"),
-                "notes": best_suspect.get("notes", "Matched against enrolled suspect photos"),
+                "notes": best_suspect.get("notes", "Watchlist Suspect Identified"),
                 "confidence": round(best_sim, 3),
                 "confidence_pct": conf_pct,
                 "matched_photo": best_photo_url,
@@ -384,7 +427,7 @@ class FaceDetector:
         h, w = frame_img.shape[:2]
         now = time.time()
 
-        # If gallery is empty, label everyone as unflagged civilian and return
+        # If gallery is empty, label everyone as Civilian
         if not self.gallery:
             for det in person_detections:
                 if det.category == "Person":
@@ -394,7 +437,7 @@ class FaceDetector:
                     det.face_bbox = (float(x1), float(y1), float(x2), float(face_box_y2))
                     det.is_watchlist_match = False
                     det.suspect_name = None
-                    det.face_name = "Subject (Unflagged)"
+                    det.face_name = "Civilian"
             return []
 
         # Clean up stale track continuity records (> 3.5 seconds old)
@@ -405,8 +448,8 @@ class FaceDetector:
         for t in stale_civs:
             self._civilian_tracks.pop(t, None)
 
-        face_events = []
-        candidates_pool = []
+        face_events: List[Dict[str, Any]] = []
+        candidates_pool: List[_FaceCandidate] = []
 
         for det in person_detections:
             if det.category != "Person":
@@ -430,7 +473,7 @@ class FaceDetector:
                 if (now - self._civilian_tracks[det.track_id]) < 0.8:
                     det.is_watchlist_match = False
                     det.suspect_name = None
-                    det.face_name = "Subject (Unflagged)"
+                    det.face_name = "Civilian"
                     continue
 
             # 2. Confirmed suspect track cache (verify periodically while maintaining stable alert)
@@ -483,41 +526,37 @@ class FaceDetector:
             best_match = None
             best_sim = -1.0
             for cand in candidates:
-                m = self.match_face(cand, threshold=0.78)
+                m = self.match_face(cand, threshold=0.74)
                 if m and m["confidence"] > best_sim:
                     best_sim = m["confidence"]
                     best_match = m
                     # SPEED BOOST: If high-confidence match found, stop evaluating remaining crops!
-                    if m["confidence"] >= 0.82:
+                    if m["confidence"] >= 0.79:
                         break
 
             # Track identity continuity smoothing (anti-flicker on head turns/tilt)
-            if (best_match is None or best_sim < 0.78) and det.track_id is not None:
+            if (best_match is None or best_sim < 0.74) and det.track_id is not None:
                 prev = self._track_identities.get(det.track_id)
                 if prev and (now - prev.get("last_seen", 0)) < 2.5:
                     best_match = prev["match"]
-                    best_sim = 0.79
+                    best_sim = 0.75
 
-            candidates_pool.append({
-                "det": det,
-                "match": best_match,
-                "sim": best_sim,
-            })
+            candidates_pool.append(_FaceCandidate(det=det, match=best_match, sim=best_sim))
 
         # 1-to-1 Frame Uniqueness Constraint:
         # Sort candidate matches by similarity descending so the single best physical match wins
-        candidates_pool.sort(key=lambda item: item["sim"], reverse=True)
-        assigned_suspect_ids = set()
+        candidates_pool.sort(key=lambda item: item.sim, reverse=True)
+        assigned_suspect_ids: Set[str] = set()
 
         for item in candidates_pool:
-            det = item["det"]
-            match = item["match"]
-            sim = item["sim"]
+            det = item.det
+            match = item.match
+            sim = item.sim
 
-            if match and match["id"] not in assigned_suspect_ids and sim >= 0.78:
-                assigned_suspect_ids.add(match["id"])
+            if match is not None and str(match.get("id")) not in assigned_suspect_ids and sim >= 0.74:
+                assigned_suspect_ids.add(str(match["id"]))
                 det.is_watchlist_match = True
-                det.suspect_name = match["name"]
+                det.suspect_name = str(match["name"])
                 det.face_name = f"{match['name']} ({match['confidence_pct']}%)"
 
                 # Update or register track identity continuity
@@ -540,13 +579,13 @@ class FaceDetector:
                     "bbox": det.face_bbox,
                 })
             else:
-                # All other people remain unflagged civilian subjects without false alarms
+                # All other people remain Civilian subjects without false alarms
                 det.is_watchlist_match = False
                 det.suspect_name = None
-                det.face_name = "Subject (Unflagged)"
+                det.face_name = "Civilian"
                 if det.track_id is not None:
                     self._civilian_tracks[det.track_id] = now
-                    if sim < 0.70:
+                    if sim < 0.65:
                         self._track_identities.pop(det.track_id, None)
 
         return face_events

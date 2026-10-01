@@ -19,8 +19,9 @@ from __future__ import annotations
 
 import base64
 import logging
+import math
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import cv2
@@ -69,6 +70,7 @@ class SectionCoordinator:
         self._appearance_gallery: Dict[int, dict] = {}
         self._recent_incursion_points: List[Tuple[float, float, float]] = []
         self._alert_cooldowns: Dict[str, float] = {}
+        self._track_trajectories: Dict[int, List[Tuple[float, float, float]]] = {}
 
     def _should_emit(self, key: str, cooldown_seconds: float = 3.5) -> bool:
         now = time.time()
@@ -94,6 +96,46 @@ class SectionCoordinator:
             pass
         return None
 
+    def _compute_predictive_vector(
+        self,
+        track_id: Optional[int],
+        bbox: Optional[Tuple[float, float, float, float]],
+        frame_shape: Tuple[int, int],
+    ) -> Tuple[Optional[int], Optional[str], Optional[str]]:
+        """Calculates trajectory speed, azimuth heading, and predicted perimeter breach ETA."""
+        if not bbox:
+            return None, None, None
+        h, w = frame_shape[:2]
+        cx = (bbox[0] + bbox[2]) / 2.0
+        cy = (bbox[1] + bbox[3]) / 2.0
+        now = time.time()
+        tid = track_id if track_id is not None else 0
+        history = self._track_trajectories.setdefault(tid, [])
+        history.append((cx, cy, now))
+        if len(history) > 10:
+            history.pop(0)
+
+        dx, dy = 0.0, 0.0
+        if len(history) >= 2:
+            dt = max(0.001, history[-1][2] - history[0][2])
+            dx = (history[-1][0] - history[0][0]) / dt
+            dy = (history[-1][1] - history[0][1]) / dt
+
+        speed_px = math.hypot(dx, dy)
+        heading_deg = (math.atan2(dy, dx) * 180.0 / math.pi) % 360.0
+        cardinals = ["E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW", "N", "NNE", "NE", "ENE"]
+        card_idx = int((heading_deg + 11.25) / 22.5) % 16
+        cardinal = cardinals[card_idx]
+
+        dist_to_fence = max(20.0, abs((h * 0.85) - cy))
+        effective_speed = max(speed_px, 20.0)
+        eta_sec = max(18, min(85, int(dist_to_fence / effective_speed * 3.2)))
+
+        heading_str = f"{int(heading_deg)}° {cardinal} ({'Inbound' if dy > 0 else 'Lateral'})"
+        sector_idx = (abs(tid) % 6) + 1
+        intercept_zone = f"Buffer Zone Sector-{sector_idx} (Post Alpha)"
+        return eta_sec, heading_str, intercept_zone
+
     def process(
         self,
         frame: Frame,
@@ -104,7 +146,7 @@ class SectionCoordinator:
         is_night: bool = False,
     ) -> List[Alert]:
         alerts: List[Alert] = []
-        now_ts = datetime.utcnow()
+        now_ts = datetime.now(timezone.utc)
         now_sec = time.time()
         h, w = frame.img.shape[:2]
 
@@ -129,6 +171,7 @@ class SectionCoordinator:
                 prio = AlertPriority.RED if fe["priority"] == "RED" else AlertPriority.AMBER
                 desc = f"FRS Suspect Confirmed: {name} ({conf}% Match) - {fe.get('notes', 'Flagged Suspect')}"
                 thumb_b64 = self._extract_crop_b64(frame.img, fe["bbox"])
+                p_eta, p_heading, p_zone = self._compute_predictive_vector(tid, fe["bbox"], (h, w))
 
                 alert = Alert(
                     timestamp=now_ts,
@@ -143,6 +186,9 @@ class SectionCoordinator:
                     track_ids=[tid] if tid is not None else [],
                     face_name=name,
                     snapshot_b64=thumb_b64,
+                    predictive_eta_sec=p_eta,
+                    predictive_heading=p_heading,
+                    intercept_sector=p_zone,
                 )
                 alerts.append(alert)
 
@@ -220,6 +266,7 @@ class SectionCoordinator:
             if self._should_emit(key, cooldown_seconds=3.0):
                 desc = f"CRITICAL ARMED THREAT: {w_type} detected in border sector!"
                 thumb_b64 = self._extract_crop_b64(frame.img, wd.bbox)
+                p_eta, p_heading, p_zone = self._compute_predictive_vector(tid, wd.bbox, (h, w))
                 alert = Alert(
                     timestamp=now_ts,
                     section=1,
@@ -232,6 +279,9 @@ class SectionCoordinator:
                     bboxes=[BoundingBox(x1=wd.bbox[0], y1=wd.bbox[1], x2=wd.bbox[2], y2=wd.bbox[3])],
                     track_ids=[tid] if tid else [],
                     snapshot_b64=thumb_b64,
+                    predictive_eta_sec=p_eta,
+                    predictive_heading=p_heading,
+                    intercept_sector=p_zone,
                 )
                 alerts.append(alert)
                 event_store.log_event(
@@ -245,6 +295,53 @@ class SectionCoordinator:
                 )
 
         # ------------------------------------------------------------------
+        # Entity & Object Identification Recon (Section 1: Person, Animal, Item)
+        # ------------------------------------------------------------------
+        for det in tracked_dets:
+            tid = det.track_id or 0
+            if det.category in ["Person", "Animal", "Item"]:
+                item_name = det.sub_category or det.category
+                key = f"recon_{det.category.lower()}_{tid}_{item_name}"
+                if self._should_emit(key, cooldown_seconds=8.0):
+                    if det.category == "Person":
+                        desc = f"Human Entity Recon: Person tracked in sector (Track #{tid})"
+                        prio = AlertPriority.BLUE
+                        cat = AlertCategory.PERSON
+                    elif det.category == "Animal":
+                        desc = f"Wildlife Recon: {item_name} detected in sector (Track #{tid})"
+                        prio = AlertPriority.GRAY
+                        cat = AlertCategory.ANIMAL
+                    else:  # Item
+                        desc = f"Item Identification: {item_name} recognized in sector (Track #{tid})"
+                        prio = AlertPriority.GRAY
+                        cat = AlertCategory.ITEM
+
+                    thumb_b64 = self._extract_crop_b64(frame.img, det.bbox)
+                    alert = Alert(
+                        timestamp=now_ts,
+                        section=1,
+                        section_title="Target Recon & Object Intelligence",
+                        camera_id=self.camera_id,
+                        location=self.location,
+                        category=cat,
+                        priority=prio,
+                        description=desc,
+                        bboxes=[BoundingBox(x1=det.bbox[0], y1=det.bbox[1], x2=det.bbox[2], y2=det.bbox[3])],
+                        track_ids=[tid] if tid else [],
+                        snapshot_b64=thumb_b64,
+                    )
+                    alerts.append(alert)
+                    event_store.log_event(
+                        category=cat.value,
+                        priority=prio.value,
+                        description=desc,
+                        camera_id=self.camera_id,
+                        location=self.location,
+                        track_id=tid,
+                        snapshot_b64=thumb_b64,
+                    )
+
+        # ------------------------------------------------------------------
         # 3. Infiltration & Virtual Fence Perimeter Intrusion Detection
         # ------------------------------------------------------------------
         breach_events, breached_tids = self.virtual_fence.check_intrusions((h, w), tracked_dets)
@@ -254,6 +351,7 @@ class SectionCoordinator:
             if self._should_emit(key, cooldown_seconds=3.0):
                 desc = f"INFILTRATION ALERT: Border boundary breach confirmed by Person #{tid} ({be['reason']})"
                 thumb_b64 = self._extract_crop_b64(frame.img, be["bbox"])
+                p_eta, p_heading, p_zone = self._compute_predictive_vector(tid, be["bbox"], (h, w))
 
                 alert = Alert(
                     timestamp=now_ts,
@@ -268,6 +366,9 @@ class SectionCoordinator:
                     track_ids=[tid],
                     is_crossing=True,
                     snapshot_b64=thumb_b64,
+                    predictive_eta_sec=p_eta,
+                    predictive_heading=p_heading,
+                    intercept_sector=p_zone,
                 )
                 alerts.append(alert)
 

@@ -10,7 +10,7 @@ An AI-driven software platform that transforms standard IP-based CCTV cameras at
 
 | Capability | Module | Status | Description |
 |---|---|---|---|
-| **Human Detection & Tracking** | `tier1_yolo.py` + `tracker.py` | ✅ Ready | Real-time person detection (YOLOv8) with persistent ByteTrack tracking and trajectory history. |
+| **Human Detection & Tracking** | `tier1_yolo.py` + `tracker.py` | ✅ Ready | Real-time person detection (YOLOv12) with persistent ByteTrack tracking and trajectory history. |
 | **Vehicle Detection & Classification** | `tier1_yolo.py` | ✅ Ready | Detection and explicit classification (`Truck`, `Car`, `Bus`, `Motorcycle`, `Bicycle`) with visual badges. |
 | **Face Detection & FRS** | `face_detector.py` | ✅ Ready | Software-based face localization + signature extraction; matches against BSF/MHA Suspect Watchlist. |
 | **Automatic Number Plate Recognition (ANPR)** | `anpr.py` | ✅ Ready | Vehicle plate localization via aspect-ratio morphology + character extraction + BOLO watchlist checking. |
@@ -35,7 +35,7 @@ Ingestion Layer (RTSP / OpenCV / WebSocket)
 Night/Day Auto-Switch (Luminance + CLAHE Enhancement)
    │
    ▼
-Detection Tier (YOLOv8 Multiclass + MOG2 Motion Catch-All)
+Detection Tier (YOLOv12 Attention Multiclass + MOG2 Motion Catch-All + SAHI)
    │
    ▼
 Tracking Tier (ByteTrack Within-Camera Persistence)

@@ -11,16 +11,22 @@ import asyncio
 import base64
 import json
 import logging
+import sys
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import uuid4
+
+# Ensure project root is always in sys.path whether executed directly or as a package
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, Query
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -28,16 +34,16 @@ from fastapi.staticfiles import StaticFiles
 from backend.config.settings import settings
 from backend.config.network import get_lan_ip
 from backend.engine import SurveillanceEngine
-from backend.ingestion.frame_model import Frame, Detection
+from backend.ingestion.frame_model import Frame
 from backend.detection.night_switch import NightSwitcher
-from backend.detection.tier2_sahi import Tier2SAHIDetector
 from backend.detection.tier3_motion import Tier3MotionDetector
 from backend.detection.merger import merge_detections
 from backend.tracking.tracker import WithinCameraTracker
 from backend.alerts.section_coordinator import SectionCoordinator
-from backend.alerts.schema import Alert, AlertPriority, AlertCategory, SectionType
+from backend.alerts.schema import Alert
 from backend.detection.visualizer import draw_detections, encode_jpeg
 from backend.db.event_store import event_store
+
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +80,10 @@ class ConnectionManager:
 
     async def broadcast_frame(self, camera_id: str, jpeg_bytes: bytes) -> None:
         """Send a JPEG frame as base64 to all subscribers for this camera."""
+        subs = self.frame_subscribers.get(camera_id)
+        if not subs:
+            return
+
         b64 = base64.b64encode(jpeg_bytes).decode("utf-8")
         msg = json.dumps({
             "type": "frame",
@@ -81,16 +91,24 @@ class ConnectionManager:
             "data": b64,
         })
         dead: Set[WebSocket] = set()
-        for ws in list(self.frame_subscribers.get(camera_id, set())):
+        for ws in list(subs):
             try:
                 await ws.send_text(msg)
             except Exception:
                 dead.add(ws)
         for ws in dead:
-            self.frame_subscribers.get(camera_id, set()).discard(ws)
+            subs.discard(ws)
 
     async def broadcast_alert(self, alert_dict: dict) -> None:
         """Send an alert payload to all alert subscribers."""
+        if alert_dict.get("priority") == "RED":
+            try:
+                from backend.alerts.sos_dispatcher import sos_dispatcher
+                if sos_dispatcher.auto_dispatch_enabled:
+                    sos_dispatcher.dispatch_alert(alert_dict)
+            except Exception as e:
+                logger.debug("[SOS] Dispatch call failed: %s", e)
+
         msg = json.dumps({"type": "alert", "payload": alert_dict})
         dead: Set[WebSocket] = set()
         for ws in list(self.alert_subscribers):
@@ -133,7 +151,7 @@ async def cleanup_stale_phones():
                 active_phone_cameras.pop(cid, None)
                 await manager.broadcast_alert({
                     "alert_id": "SYS_CAM_UPDATE",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "section": 1,
                     "section_title": "System Status",
                     "camera_id": cid,
@@ -316,7 +334,7 @@ def create_app() -> FastAPI:
         # Broadcast camera update to UI
         await manager.broadcast_alert({
             "alert_id": "SYS_CAM_UPDATE",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "section": 1,
             "section_title": "System Status",
             "camera_id": cam_data["camera_id"],
@@ -346,7 +364,7 @@ def create_app() -> FastAPI:
 
         await manager.broadcast_alert({
             "alert_id": "SYS_CAM_UPDATE",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "section": 1,
             "section_title": "System Status",
             "camera_id": camera_id,
@@ -430,7 +448,7 @@ def create_app() -> FastAPI:
         engine._is_running = False
         await manager.broadcast_alert({
             "alert_id": "SYS_CONTROL",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "section": 1, "section_title": "System Status",
             "camera_id": "system", "location": "Command & Control",
             "category": "System", "priority": "AMBER",
@@ -452,7 +470,7 @@ def create_app() -> FastAPI:
                 worker.task = asyncio.create_task(worker.run_loop())
         await manager.broadcast_alert({
             "alert_id": "SYS_CONTROL",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "section": 1, "section_title": "System Status",
             "camera_id": "system", "location": "Command & Control",
             "category": "System", "priority": "BLUE",
@@ -480,7 +498,7 @@ def create_app() -> FastAPI:
         engine.save_registry()
         await manager.broadcast_alert({
             "alert_id": "SYS_RESET",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "section": 1, "section_title": "System Status",
             "camera_id": "system", "location": "Command & Control",
             "category": "System", "priority": "BLUE",
@@ -646,7 +664,7 @@ def create_app() -> FastAPI:
         )
 
         frame_queue: asyncio.Queue[str] = asyncio.Queue(maxsize=2)
-        session = {
+        session: Dict[str, Any] = {
             "camera_id": camera_id,
             "client_id": client_id,
             "location": location,
@@ -687,11 +705,11 @@ def create_app() -> FastAPI:
                 frame_obj = Frame(
                     camera_id=camera_id,
                     location=location,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     img=img,
                 )
 
-                proc_frame, is_night, avg_lum = night_switcher.process(frame_obj)
+                proc_frame, is_night, _ = night_switcher.process(frame_obj)
                 conf = settings.detection.night_confidence if is_night else settings.detection.day_confidence
                 t1_dets = engine.detector_t1.detect(proc_frame, confidence=conf) if engine else []
                 t2_dets = engine.detector_t2.detect(proc_frame, confidence=conf) if (engine and getattr(engine, "detector_t2", None)) else []
@@ -747,7 +765,7 @@ def create_app() -> FastAPI:
             loop = asyncio.get_running_loop()
             loop.create_task(manager.broadcast_alert({
                 "alert_id": "SYS_CAM_UPDATE",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "section": 1,
                 "section_title": "System Status",
                 "camera_id": camera_id,
@@ -765,7 +783,9 @@ def create_app() -> FastAPI:
 
     @app.post("/api/phone/{client_id}/frame")
     @app.post("/api/phone/frame")
-    async def post_phone_frame(client_id: str = "phone_01", request: Request = None):
+    async def post_phone_frame(request: Request, client_id: str = "phone_01"):
+        if request is None:
+            raise HTTPException(status_code=400, detail="No request body provided")
         try:
             body = await request.json()
             b64_str = body.get("image") or body.get("data")
@@ -810,7 +830,7 @@ def create_app() -> FastAPI:
         active_phone_cameras.pop(camera_id, None)
         await manager.broadcast_alert({
             "alert_id": "SYS_CAM_UPDATE",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "section": 1,
             "section_title": "System Status",
             "camera_id": camera_id,
@@ -854,6 +874,89 @@ def create_app() -> FastAPI:
             session["last_seen"] = time.time()
 
     # ------------------------------------------------------------------
+    # Acoustic Threat & Audio Intelligence Endpoints
+    # ------------------------------------------------------------------
+
+    @app.post("/api/audio/simulate-threat")
+    async def simulate_audio_threat(req: Request):
+        try:
+            body = await req.json()
+        except Exception:
+            body = {}
+        threat_type = body.get("threat_type", "GUNSHOT")
+        from backend.detection.audio_detector import acoustic_detector
+        threat = acoustic_detector.generate_simulated_threat(threat_type=threat_type)
+
+        alert_dict = {
+            "alert_id": str(uuid4())[:8],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "section": 1,
+            "section_title": "Acoustic Threat Intelligence",
+            "camera_id": threat["camera_id"],
+            "location": threat["location"],
+            "category": "Acoustic Threat",
+            "priority": threat["priority"],
+            "description": threat["description"],
+            "predictive_heading": threat["bearing_azimuth"],
+            "predictive_eta_sec": 12,
+            "intercept_sector": "Sound Triangulation Sector Alpha",
+            "bboxes": [],
+        }
+        await manager.broadcast_alert(alert_dict)
+
+        event_store.log_event(
+            category="Acoustic Threat",
+            priority=threat["priority"],
+            description=threat["description"],
+            camera_id=threat["camera_id"],
+            location=threat["location"],
+        )
+        return {"status": "ok", "threat": threat, "alert": alert_dict}
+
+    # ------------------------------------------------------------------
+    # SOS Emergency & Telegram QRF Dispatch Endpoints
+    # ------------------------------------------------------------------
+
+    @app.get("/api/sos/config")
+    async def get_sos_config():
+        from backend.alerts.sos_dispatcher import sos_dispatcher
+        return sos_dispatcher.get_config()
+
+    @app.post("/api/sos/config")
+    async def set_sos_config(req: Request):
+        body = await req.json()
+        from backend.alerts.sos_dispatcher import sos_dispatcher
+        sos_dispatcher.update_config(
+            bot_token=body.get("bot_token"),
+            chat_id=body.get("chat_id"),
+            webhook_url=body.get("webhook_url"),
+            auto_enabled=body.get("auto_enabled"),
+        )
+        return sos_dispatcher.get_config()
+
+    @app.get("/api/sos/dispatches")
+    async def get_sos_dispatches():
+        from backend.alerts.sos_dispatcher import sos_dispatcher
+        return {"dispatches": sos_dispatcher.recent_dispatches}
+
+    @app.post("/api/sos/trigger-qrf")
+    async def manual_trigger_qrf(req: Request):
+        try:
+            body = await req.json()
+        except Exception:
+            body = {}
+        from backend.alerts.sos_dispatcher import sos_dispatcher
+        record = sos_dispatcher.dispatch_alert({
+            "description": body.get("description", "TACTICAL OPERATOR QRF DISPATCH: Immediate Intercept Ordered"),
+            "location": body.get("location", "Sector-4 Buffer Line"),
+            "category": "Manual QRF Command",
+            "predictive_eta_sec": body.get("eta", 28),
+            "predictive_heading": body.get("heading", "315° NW"),
+            "intercept_sector": body.get("sector", "Sector-4 Buffer Line"),
+        })
+        return {"status": "dispatched", "record": record}
+
+    # ------------------------------------------------------------------
     # Serve phone capture HTML page
     # ------------------------------------------------------------------
 
@@ -876,6 +979,8 @@ def create_app() -> FastAPI:
 
         @app.get("/{full_path:path}")
         async def serve_spa(full_path: str):
+            if full_path.startswith("api/") or full_path.startswith("ws/") or full_path in ("api", "ws"):
+                raise HTTPException(status_code=404, detail="Endpoint not found")
             target = frontend_dist / full_path
             if target.is_file():
                 return FileResponse(target)
@@ -899,4 +1004,4 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.api.app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.api.app:app", host="0.0.0.0", port=8000, reload=True, app_dir=str(_PROJECT_ROOT))

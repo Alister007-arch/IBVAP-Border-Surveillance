@@ -25,21 +25,25 @@ CONFIG_DIR = Path(__file__).parent
 
 @dataclass
 class DetectionSettings:
-    day_confidence: float = 0.35
-    night_confidence: float = 0.25
+    tier1_model: str = "yolov8n.pt"
+    tier1_imgsz: int = 480
+    day_confidence: float = 0.25
+    night_confidence: float = 0.20
     night_brightness_threshold: int = 60   # 0-255 mean pixel brightness
     tier2_slice_height: int = 320
     tier2_slice_width: int = 320
     tier2_overlap_ratio: float = 0.2
     tier2_airspace_only: bool = True       # Focus sliced inference on upper airspace (top 65% of frame)
-    tier2_cadence: int = 2                 # Run sliced inference every 2 frames for 25-30 FPS efficiency
-    tier3_min_contour_area: int = 250      # px² - adaptive small target threshold (lowered from 900)
+    tier2_cadence: int = 10                # Run sliced inference every 10 frames (or on airspace motion)
+    tier3_min_contour_area: int = 200      # px² - adaptive small target threshold
+    detection_stride: int = 1              # Run full YOLO inference every N frames (1=all frames)
 
 
 @dataclass
 class TrackingSettings:
-    max_lost_frames: int = 30
-    min_hits: int = 3
+    max_lost_frames: int = 40
+    min_hits: int = 1
+
 
 
 @dataclass
@@ -60,7 +64,8 @@ class AlertSettings:
 
 @dataclass
 class PipelineSettings:
-    target_fps: int = 15
+    target_fps: int = 180
+    async_inference: bool = True
     frame_width: int = 854
     frame_height: int = 480
     preview_enabled: bool = True

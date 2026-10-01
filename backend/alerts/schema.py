@@ -6,12 +6,13 @@ Pydantic schema for the 6-Tier Intelligence & Alerting System.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic.main import BaseModel
+from pydantic import Field
 
 
 class AlertPriority(str, Enum):
@@ -28,6 +29,7 @@ class AlertCategory(str, Enum):
     VEHICLE             = "Vehicle"
     ANIMAL              = "Animal"
     DRONE               = "Drone"
+    ITEM                = "Item"
     GROUP               = "Group"
     REID_MATCH          = "ReID-Match"
     MULTI_SECTOR        = "Multi-Sector"
@@ -37,6 +39,7 @@ class AlertCategory(str, Enum):
     ANPR_PLATE          = "ANPR Plate"
     SUSPICIOUS_ACTIVITY = "Suspicious Activity"
     NIGHT_MOVEMENT      = "Night Movement"
+    ACOUSTIC_THREAT     = "Acoustic Threat"
     SYSTEM              = "System"
 
 
@@ -68,7 +71,7 @@ class BoundingBox(BaseModel):
 
 class Alert(BaseModel):
     alert_id: str = Field(default_factory=lambda: str(uuid4())[:8])
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     section: int = 1
     section_title: str = "Recon: Person / Vehicle / Animal"
     camera_id: str
@@ -88,6 +91,9 @@ class Alert(BaseModel):
     plate_number: Optional[str] = None
     face_name: Optional[str] = None
     snapshot_b64: Optional[str] = None
+    predictive_eta_sec: Optional[int] = None
+    predictive_heading: Optional[str] = None
+    intercept_sector: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -97,7 +103,7 @@ class SystemStatus(BaseModel):
     active_tracks: int
     active_alerts: int
     section_counts: Dict[int, int] = Field(default_factory=lambda: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0})
-    last_update: datetime = Field(default_factory=datetime.utcnow)
+    last_update: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     zone_name: str = "Border Sector North (Alpha-7)"
 
 

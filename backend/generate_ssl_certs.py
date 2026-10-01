@@ -58,7 +58,7 @@ def generate_self_signed_cert(host_ip: str | None = None):
     ])
 
     # Subject Alternative Names (SANs)
-    san_list = [x509.DNSName("localhost")]
+    san_list: list[x509.GeneralName] = [x509.DNSName("localhost")]
     for ip in get_local_ipv4_addresses():
         san = _ip_san(ip)
         if san and san not in san_list:

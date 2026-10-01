@@ -120,7 +120,7 @@ def generate_3d_architecture():
             "side2": "#151F38",
             "border": "#00F0FF",
             "modules": [
-                (-3.4, 0, 2.2, 1.3, "#B91C1C", "Ultralytics YOLOv8", "Multiclass Person/Vehicles"),
+                (-3.4, 0, 2.2, 1.3, "#B91C1C", "Ultralytics YOLOv12", "Multiclass Person/Vehicles"),
                 (-1.1, 0, 2.1, 1.3, "#B45309", "OpenCV MOG2", "Weather Motion Fallback"),
                 (1.1, 0, 2.1, 1.3, "#1D4ED8", "ByteTrack Engine", "Trajectory & Velocity Kalman"),
                 (3.3, 0, 1.9, 1.3, "#6D28D9", "Cross-Cam Re-ID", "HSV Color Space Matching"),
@@ -277,7 +277,7 @@ def generate_system_workflow():
             "color": "#7C3AED",
             "x": 6.0,
             "items": [
-                ("Ultralytics YOLOv8", "Multiclass Person/Vehicles/Luggage"),
+                ("Ultralytics YOLOv12", "Multiclass Person/Vehicles/Luggage"),
                 ("OpenCV MOG2", "Motion subtraction for rain/fog"),
                 ("Detection Merger", "Suppresses false positives & joins boxes"),
                 ("ByteTrack Engine", "Kalman-filtered trajectory persistence")
@@ -405,7 +405,7 @@ def generate_decision_tree():
     ax.annotate("YES (NIGHT)", xy=(3.5, 7.15), xytext=(4.3, 7.15), arrowprops=dict(arrowstyle="-|>", color="#F59E0B", lw=1.5),
                 ha="center", va="bottom", color="#F59E0B", fontsize=7.5, fontweight="bold")
 
-    draw_node(6.0, 5.7, 3.4, 0.8, "YOLOv8 + MOG2 Detection", "Person, Vehicle, Bag, Motion", "#00D2FF")
+    draw_node(6.0, 5.7, 3.4, 0.8, "YOLOv12 + MOG2 Detection", "Person, Vehicle, Bag, Motion", "#00D2FF")
     ax.annotate("NO (DAY)", xy=(6.0, 6.1), xytext=(6.0, 6.67), arrowprops=dict(arrowstyle="-|>", color="#38BDF8", lw=1.5),
                 ha="right", va="center", color="#38BDF8", fontsize=7.5, fontweight="bold")
     ax.annotate("", xy=(4.8, 5.7), xytext=(2.2, 6.77), arrowprops=dict(arrowstyle="-|>", color="#06B6D4", lw=1.5))

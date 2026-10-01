@@ -5,6 +5,9 @@ import AlertFeed from "./components/AlertFeed";
 import AddCameraModal from "./components/AddCameraModal";
 import EventLogModal from "./components/EventLogModal";
 import WatchlistModal from "./components/WatchlistModal";
+import TacticalGISRadarModal from "./components/TacticalGISRadarModal";
+import ForensicDossierModal from "./components/ForensicDossierModal";
+import TacticalVoiceAssistant from "./components/TacticalVoiceAssistant";
 import { useSystemWebSocket } from "./hooks/useSystemWebSocket";
 import { useAlarmBeep } from "./hooks/useAlarmBeep";
 
@@ -105,6 +108,31 @@ export default function App() {
   const [isAddCameraOpen, setIsAddCameraOpen] = useState(false);
   const [isEventLogOpen, setIsEventLogOpen] = useState(false);
   const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
+  const [isTacticalMapOpen, setIsTacticalMapOpen] = useState(false);
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [globalVisionMode, setGlobalVisionMode] = useState("OPTICAL");
+
+  const handleVoiceSwitchTab = (tab) => {
+    if (tab === "RADAR") setIsTacticalMapOpen(true);
+    else if (tab === "DOSSIER") setIsDossierOpen(true);
+    else if (tab === "WATCHLIST") setIsWatchlistOpen(true);
+    else if (tab === "GRID") {
+      setIsTacticalMapOpen(false);
+      setIsDossierOpen(false);
+      setIsWatchlistOpen(false);
+    }
+  };
+
+  const handleVoiceDispatchQRF = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/sos/trigger-qrf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: "VOICE AI ACTIVATED: QRF Squad Dispatched" }),
+      });
+    } catch (e) { console.error(e); }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -207,16 +235,39 @@ export default function App() {
         onOpenAddCamera={() => setIsAddCameraOpen(true)}
         onOpenEventLog={() => setIsEventLogOpen(true)}
         onOpenWatchlist={() => setIsWatchlistOpen(true)}
+        onOpenTacticalMap={() => setIsTacticalMapOpen(true)}
+        onOpenDossier={() => setIsDossierOpen(true)}
+        voiceAssistant={
+          <TacticalVoiceAssistant
+            onSwitchTab={handleVoiceSwitchTab}
+            onToggleThermal={setGlobalVisionMode}
+            onDispatchQRF={handleVoiceDispatchQRF}
+            cameraList={cameraList}
+            alerts={alerts}
+          />
+        }
         onSystemStart={handleSystemStart}
         onSystemStop={handleSystemStop}
         onSystemReset={handleSystemReset}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Left sidebar: tactical alert feed */}
-        <div className="w-[28rem] flex-shrink-0 flex flex-col border-r border-slate-800 overflow-hidden shadow-xl z-10">
-          <AlertFeed alerts={alerts} />
-        </div>
+        {isSidebarOpen && (
+          <div className="w-[26rem] xl:w-[28rem] flex-shrink-0 flex flex-col border-r border-slate-800 overflow-hidden shadow-xl z-10 transition-all">
+            <AlertFeed alerts={alerts} />
+          </div>
+        )}
+
+        {/* Sidebar Toggle Handle */}
+        <button
+          onClick={() => setIsSidebarOpen((prev) => !prev)}
+          className="absolute z-20 left-0 top-1/2 -translate-y-1/2 bg-slate-800/90 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 rounded-r px-1 py-3 text-[10px] font-mono shadow-xl transition"
+          style={isSidebarOpen ? { left: "calc(26rem - 1px)" } : { left: "0px" }}
+          title={isSidebarOpen ? "Collapse Tactical Alert Feed" : "Expand Tactical Alert Feed"}
+        >
+          {isSidebarOpen ? "◀" : "▶"}
+        </button>
 
         {/* Main area: camera grid */}
         <div className="flex-1 overflow-auto p-3 bg-slate-950/60">
@@ -227,6 +278,7 @@ export default function App() {
             onOpenAddCamera={() => setIsAddCameraOpen(true)}
             onRemoveCamera={handleRemoveCamera}
             onQuickStartWebcam={handleQuickStartWebcam}
+            globalVisionMode={globalVisionMode}
           />
         </div>
       </div>
@@ -244,6 +296,17 @@ export default function App() {
       <WatchlistModal
         isOpen={isWatchlistOpen}
         onClose={() => setIsWatchlistOpen(false)}
+      />
+      <TacticalGISRadarModal
+        isOpen={isTacticalMapOpen}
+        onClose={() => setIsTacticalMapOpen(false)}
+        alerts={alerts}
+        cameras={cameraList}
+      />
+      <ForensicDossierModal
+        isOpen={isDossierOpen}
+        onClose={() => setIsDossierOpen(false)}
+        alerts={alerts}
       />
     </div>
   );

@@ -13,6 +13,10 @@ import {
   AlertTriangle,
   Moon,
   Footprints,
+  Navigation,
+  Volume2,
+  Send,
+  CheckCircle2,
 } from 'lucide-react';
 
 const SECTIONS = [
@@ -23,6 +27,7 @@ const SECTIONS = [
   { id: 5, title: 'Night-Time Movements', detail: 'Low-Light & IR Movement', icon: Moon, color: 'text-indigo-400' },
   { id: 6, title: 'Airspace Threats', detail: 'Drone & Aerial Incursions', icon: Plane, color: 'text-purple-400' },
   { id: 7, title: 'Mass Incursion Clusters', detail: 'Group Gatherings & Formations', icon: Users, color: 'text-emerald-400' },
+  { id: 8, title: 'Acoustic Threat Intelligence', detail: 'Gunshots, Drone Rotors, Blasts', icon: Volume2, color: 'text-rose-400' },
 ];
 
 const PRIORITIES = ['ALL', 'RED', 'AMBER', 'BLUE'];
@@ -78,6 +83,17 @@ function AlertCard({ alert }) {
 
       <p className="text-[11px] text-slate-200 leading-snug font-medium">{alert.description}</p>
 
+      {/* Predictive Intercept Vector & ETA */}
+      {alert.predictive_heading && (
+        <div className="bg-slate-900/90 border border-amber-900/60 rounded px-2 py-1 flex items-center justify-between text-[10px] font-mono">
+          <span className="text-amber-300 font-bold flex items-center gap-1">
+            <Navigation className="w-2.5 h-2.5 text-amber-400" />
+            ETA: {alert.predictive_eta_sec}s ({alert.predictive_heading})
+          </span>
+          <span className="text-slate-400 truncate max-w-[130px]">{alert.intercept_sector}</span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
         <div className="flex items-center gap-1 min-w-0">
           <MapPin className="w-3 h-3 text-slate-500 shrink-0" />
@@ -108,6 +124,7 @@ export default function AlertFeed({ alerts }) {
     if (cat === 'Night Movement') return 5;
     if (cat === 'Drone') return 6;
     if (cat === 'Group') return 7;
+    if (cat === 'Acoustic Threat') return 8;
     return 1;
   };
 
@@ -137,19 +154,55 @@ export default function AlertFeed({ alerts }) {
           </span>
         </div>
 
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {PRIORITIES.map((priority) => (
+        <div className="flex items-center justify-between gap-1 flex-wrap">
+          <div className="flex items-center gap-1 overflow-x-auto">
+            {PRIORITIES.map((priority) => (
+              <button
+                key={priority}
+                onClick={() => setPriorityFilter(priority)}
+                className={`text-[10px] px-2 py-0.5 rounded border font-mono font-bold transition-colors ${filterButtonClasses(
+                  priority,
+                  priorityFilter === priority,
+                )}`}
+              >
+                {priority}
+              </button>
+            ))}
+          </div>
+
+          {/* Quick Acoustic AI Simulator */}
+          <div className="flex items-center gap-1">
             <button
-              key={priority}
-              onClick={() => setPriorityFilter(priority)}
-              className={`text-[10px] px-2 py-0.5 rounded border font-mono font-bold transition-colors ${filterButtonClasses(
-                priority,
-                priorityFilter === priority,
-              )}`}
+              onClick={async () => {
+                try {
+                  await fetch("/api/audio/simulate-threat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ threat_type: "GUNSHOT" }),
+                  });
+                } catch (e) { console.error(e); }
+              }}
+              className="bg-rose-950/80 hover:bg-rose-900 border border-rose-700/80 text-rose-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded transition flex items-center gap-1"
+              title="Test Acoustic Gunshot Detection"
             >
-              {priority}
+              💥 Gunshot
             </button>
-          ))}
+            <button
+              onClick={async () => {
+                try {
+                  await fetch("/api/audio/simulate-threat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ threat_type: "DRONE_ROTOR" }),
+                  });
+                } catch (e) { console.error(e); }
+              }}
+              className="bg-purple-950/80 hover:bg-purple-900 border border-purple-700/80 text-purple-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded transition flex items-center gap-1"
+              title="Test Acoustic Drone Rotor Detection"
+            >
+              🚁 Drone
+            </button>
+          </div>
         </div>
       </div>
 

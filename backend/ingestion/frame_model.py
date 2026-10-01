@@ -100,10 +100,17 @@ class Detection:
     face_detected: bool = False
     face_name: Optional[str] = None            # Matched identity from Watchlist (FRS)
     face_bbox: Optional[Tuple[float, float, float, float]] = None
+    is_watchlist_match: bool = False           # Flagged match against enrolled watchlist
+    suspect_name: Optional[str] = None         # Matched suspect identifier/name
     plate_number: Optional[str] = None         # Detected vehicle plate (ANPR)
+    license_plate: Optional[str] = None        # Alias for plate_number
+    plate_confidence: Optional[float] = None
+    is_suspect_plate: bool = False
     plate_bbox: Optional[Tuple[float, float, float, float]] = None
     is_loitering: bool = False                 # Suspicious activity
     loitering_seconds: float = 0.0
+    is_sprinting: bool = False
+    unattended_seconds: float = 0.0
 
     # Phase 3+: set to True if this detection was merged/suppressed by NMS
     suppressed: bool = False

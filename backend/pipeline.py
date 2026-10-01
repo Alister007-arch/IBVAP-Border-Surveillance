@@ -72,7 +72,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--model",
         default=None,
-        help="Path to a YOLO .pt model file (default: yolov8n.pt, auto-downloaded)",
+        help="Path to a YOLO .pt model file (default: yolo12n.pt, auto-downloaded)",
     )
     p.add_argument(
         "--confidence",
@@ -94,6 +94,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--show-tier",
         action="store_true",
         help="Show source tier in each detection label",
+    )
+    p.add_argument(
+        "--fps",
+        type=int,
+        default=None,
+        help="Target playback/processing FPS (default: settings.pipeline.target_fps or 250)",
     )
     p.add_argument(
         "--boundary",
@@ -142,11 +148,23 @@ def build_source(source_str: str, camera_id: str, location: str):
 # ---------------------------------------------------------------------------
 
 def run(args: argparse.Namespace) -> None:
+    if sys.platform.startswith("win"):
+        try:
+            import ctypes
+            ctypes.windll.winmm.timeBeginPeriod(1)
+        except Exception:
+            pass
+
+    target_fps = args.fps or getattr(settings.pipeline, "target_fps", 250)
+    frame_interval = 1.0 / max(5, target_fps)
+    stride = max(1, round(target_fps / 30)) if target_fps > 35 else 1
+    cached_detections = []
+
     # Build source adapter
     source = build_source(args.source, args.camera_id, args.location)
 
     # Load detector
-    detector = Tier1Detector(model_path=args.model or "yolov8n.pt")
+    detector = Tier1Detector(model_path=args.model or "yolo12n.pt")
 
     # Optional boundary line
     boundary = parse_boundary(args.boundary) if args.boundary else None
@@ -166,23 +184,32 @@ def run(args: argparse.Namespace) -> None:
     frame_count = 0
     total_detections = 0
     t_start = time.perf_counter()
-    fps_report_interval = 30   # print FPS every N frames
+    fps_report_interval = 60   # print FPS every N frames
 
     logger.info("=" * 60)
-    logger.info("Border Surveillance System — Phase 1")
-    logger.info("Source   : %s", args.source)
-    logger.info("Camera   : %s | %s", args.camera_id, args.location)
-    logger.info("Preview  : %s", "ON" if preview else "OFF (headless)")
-    logger.info("Boundary : %s", boundary or "none")
+    logger.info("Border Surveillance System — High-Throughput Pipeline (YOLOv12)")
+    logger.info("Source     : %s", args.source)
+    logger.info("Camera     : %s | %s", args.camera_id, args.location)
+    logger.info("Target FPS : %d (stride: %d)", target_fps, stride)
+    logger.info("Preview    : %s", "ON" if preview else "OFF (headless)")
+    logger.info("Boundary   : %s", boundary or "none")
     logger.info("=" * 60)
-    logger.info("Press Q in the preview window to quit.")
+    if preview:
+        logger.info("Press Q in the preview window to quit.")
 
     try:
         for frame in source.frames():
-            # ── Tier-1 detection ────────────────────────────────────────────
-            detections = detector.detect(frame, confidence=args.confidence)
-            total_detections += len(detections)
+            t_frame_start = time.perf_counter()
             frame_count += 1
+
+            # ── Tier-1 detection (strided for up to 150 FPS) ────────────────
+            if (frame_count % stride == 1) or not cached_detections or stride == 1:
+                detections = detector.detect(frame, confidence=args.confidence)
+                cached_detections = detections
+            else:
+                detections = cached_detections
+
+            total_detections += len(detections)
 
             # ── Visualise ───────────────────────────────────────────────────
             annotated = draw_detections(
@@ -213,13 +240,20 @@ def run(args: argparse.Namespace) -> None:
             if args.save_output:
                 if writer is None:
                     h, w = annotated.shape[:2]
-                    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                    fourcc_func = getattr(cv2, "VideoWriter_fourcc", cv2.VideoWriter.fourcc)
+                    fourcc = fourcc_func(*"mp4v")
                     writer = cv2.VideoWriter(
                         args.save_output, fourcc,
-                        settings.pipeline.target_fps, (w, h)
+                        target_fps, (w, h)
                     )
                     logger.info("Writing output to: %s", args.save_output)
                 writer.write(annotated)
+
+            # ── High precision sub-millisecond pacing ───────────────────────
+            elapsed_frame = time.perf_counter() - t_frame_start
+            delay = frame_interval - elapsed_frame
+            if delay > 0.0015:
+                time.sleep(delay)
 
             # ── Periodic stats ──────────────────────────────────────────────
             if frame_count % fps_report_interval == 0:

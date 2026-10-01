@@ -44,7 +44,7 @@
 
 #### • Innovation and uniqueness of the solution
 1. **Zero-Hardware Mandate**: Operates over standard RTSP/HTTP feeds from any existing CCTV, USB webcam, or mobile camera.
-2. **Multi-Tier Fallback Architecture**: Combines deep learning (YOLOv8) with statistical motion modeling (MOG2) to guarantee detection even during partial occlusion, low bandwidth, or extreme weather.
+2. **Multi-Tier Fallback Architecture**: Combines deep learning (YOLOv12) with statistical motion modeling (MOG2) to guarantee detection even during partial occlusion, low bandwidth, or extreme weather.
 3. **Dual-Server Secure Streaming**: Simultaneous HTTP command dashboard (port 8000) and HTTPS/WSS mobile patrol ingest (port 8443) using automated on-the-fly SSL generation.
 4. **Three-Tier Acoustic & Visual Alarm**: Web Audio API synthesized frequencies (RED 880Hz double-burst, AMBER 520Hz pulse, BLUE 330Hz chime) with synchronized pulsing LED indicators for instant operator reflexes.
 
@@ -59,7 +59,7 @@
 | Domain | Technology / Framework | Function in System |
 |---|---|---|
 | **Backend Core** | Python 3.11+ / FastAPI / Uvicorn | Async REST API & multi-stream WebSocket server |
-| **Computer Vision & AI** | Ultralytics YOLOv8 / OpenCV 4.9+ | Multiclass detection, CLAHE contrast boost, MOG2 background subtractor |
+| **Computer Vision & AI** | Ultralytics YOLOv12 / OpenCV 4.9+ | Multiclass detection, CLAHE contrast boost, MOG2 background subtractor |
 | **Object Tracking** | ByteTrack (Supervision) | Trajectory tracking, speed calculation, track persistence |
 | **Biometrics & FRS** | InsightFace / ArcFace / ONNX Runtime | 512-D face embedding extraction & cosine similarity matching |
 | **ANPR & OCR** | OpenCV Morphology + CNN / Tesseract | Plate localization, character segmentation & BOLO matching |
@@ -86,7 +86,7 @@
 │    └─► Ambient Lux < Threshold? ──► [ CLAHE Contrast Enhancement ]     │
 │                                                                        │
 │ 2. Dual-Engine Detection Tier                                          │
-│    ├─► Tier 1: YOLOv8 Multiclass (Person / Vehicle / Bag)              │
+│    ├─► Tier 1: YOLOv12 Multiclass (Person / Vehicle / Bag)             │
 │    └─► Tier 3: MOG2 Motion Fallback (Extreme Weather / Camouflage)     │
 │                                                                        │
 │ 3. Tracking & Identity Association                                     │
@@ -121,7 +121,7 @@
 #### • Analysis of the feasibility of the idea
 
 * **Technical Feasibility**:
-  * Employs mature, production-grade open-source computer vision frameworks (YOLOv8, ByteTrack, InsightFace).
+  * Employs mature, production-grade open-source computer vision frameworks (YOLOv12, ByteTrack, InsightFace).
   * Optimized inference pipeline processes video on commodity CPU architecture (15–25 FPS) and scales to 60+ FPS on edge GPUs (NVIDIA Jetson / RTX).
   * Fully decoupled client-server architecture allows independent horizontal scaling across border sectors.
 * **Operational Feasibility**:
@@ -186,7 +186,7 @@
 #### • Details / Links of the reference and research work
 
 1. **Object Detection & Small Target Ingestion**:
-   * Jocher, G., Chaurasia, A., & Qiu, J. (2023). *Ultralytics YOLOv8 Architecture and Sliced Inference*.
+   * Jocher, G., et al. (2025). *Ultralytics YOLOv12 Architecture and Attention-Centric Inference*.
    * Research Link: [https://github.com/ultralytics/ultralytics](https://github.com/ultralytics/ultralytics)
    * Applied in IBVAP: Multiclass bounding box classification and high-speed edge feature extraction.
 

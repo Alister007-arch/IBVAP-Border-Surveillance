@@ -1,11 +1,3 @@
 {
-  "cameras": [
-    {
-      "camera_id": "webcam_local_01",
-      "location": "Command Post (Integrated USB Webcam)",
-      "type": "webcam",
-      "source": "0",
-      "enabled": true
-    }
-  ]
+  "cameras": []
 }

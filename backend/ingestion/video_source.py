@@ -32,6 +32,10 @@ class BaseVideoSource(ABC):
         self.location = location
         self.target_fps = target_fps
         self._frame_idx: int = 0
+        self._stopped: bool = False
+
+    def stop(self):
+        self._stopped = True
 
     @abstractmethod
     def frames(self) -> Iterator[Frame]:
@@ -86,8 +90,43 @@ class VideoFileSource(BaseVideoSource):
             )
 
     def frames(self) -> Iterator[Frame]:
+        # Fast memory buffer for looping video clips (eliminates disk reopen stalls for 150+ FPS)
+        if self.loop:
+            cap = cv2.VideoCapture(str(self.source_path))
+            if cap.isOpened():
+                cached_imgs = []
+                native_fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+                skip_ratio = max(1, round(native_fps / self.target_fps))
+                raw_idx = 0
+                while True:
+                    ok, img = cap.read()
+                    if not ok:
+                        break
+                    raw_idx += 1
+                    if raw_idx % skip_ratio != 0:
+                        continue
+                    if img.shape[1] != self.resize_to[0] or img.shape[0] != self.resize_to[1]:
+                        img = cv2.resize(img, self.resize_to, interpolation=cv2.INTER_LINEAR)
+                    cached_imgs.append(img)
+                    if len(cached_imgs) > 500:  # If clip is very long, stream from disk instead
+                        cached_imgs = None
+                        break
+                cap.release()
+
+                if cached_imgs:
+                    logger.info(
+                        "[%s] Memory-cached %d frames from '%s' for ultra-high throughput playback (up to 150 FPS)",
+                        self.camera_id, len(cached_imgs), self.source_path.name,
+                    )
+                    while not self._stopped:
+                        for img in cached_imgs:
+                            if self._stopped:
+                                break
+                            yield self._make_frame(img)
+                    return
+
         run = True
-        while run:
+        while run and not self._stopped:
             cap = cv2.VideoCapture(str(self.source_path))
             if not cap.isOpened():
                 logger.error("[%s] Cannot open video file: %s", self.camera_id, self.source_path)
@@ -102,7 +141,7 @@ class VideoFileSource(BaseVideoSource):
                 self.camera_id, self.source_path.name, native_fps, self.target_fps,
             )
 
-            while True:
+            while not self._stopped:
                 ok, img = cap.read()
                 if not ok:
                     break
@@ -117,7 +156,7 @@ class VideoFileSource(BaseVideoSource):
                 yield self._make_frame(img)
 
             cap.release()
-            if not self.loop:
+            if not self.loop or self._stopped:
                 run = False
 
 
@@ -171,7 +210,8 @@ class WebcamSource(BaseVideoSource):
 
         # 1. Hardware MJPEG compression to prevent USB bus frame drops
         try:
-            cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+            fourcc_func = getattr(cv2, "VideoWriter_fourcc", cv2.VideoWriter.fourcc)
+            cap.set(cv2.CAP_PROP_FOURCC, fourcc_func(*'MJPG'))
         except Exception:
             pass
 
@@ -182,7 +222,7 @@ class WebcamSource(BaseVideoSource):
             pass
 
         # 3. Framerate and resolution
-        cap.set(cv2.CAP_PROP_FPS, max(20, self.target_fps))
+        cap.set(cv2.CAP_PROP_FPS, 30)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resize_to[0])
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resize_to[1])
 
@@ -190,7 +230,8 @@ class WebcamSource(BaseVideoSource):
 
         self._running = True
         self._latest_img = None
-        has_new_frame = threading.Event()
+        self._has_new_frame_ev = threading.Event()
+        has_new_frame = self._has_new_frame_ev
 
         # Dedicated grabber thread continuously reading latest hardware frame
         def grabber_thread():
@@ -206,13 +247,16 @@ class WebcamSource(BaseVideoSource):
         t = threading.Thread(target=grabber_thread, daemon=True, name=f"webcam_grab_{self.camera_id}")
         t.start()
 
-        frame_interval = 1.0 / max(5, self.target_fps)
         last_yielded_img = None
 
         try:
             while self._running:
-                has_new_frame.wait(timeout=frame_interval * 1.5)
+                # Wait up to 1.0s for next hardware frame (instant wake on frame ready)
+                has_new_frame.wait(timeout=1.0)
                 has_new_frame.clear()
+
+                if not self._running:
+                    break
 
                 with self._lock:
                     curr_img = self._latest_img
@@ -234,9 +278,15 @@ class WebcamSource(BaseVideoSource):
                 yield self._make_frame(img_out)
         finally:
             self._running = False
+            has_new_frame.set()
             t.join(timeout=0.5)
             cap.release()
             logger.info("[%s] Stabilized webcam released", self.camera_id)
+
+    def stop(self):
+        self._running = False
+        if hasattr(self, "_has_new_frame_ev"):
+            self._has_new_frame_ev.set()
 
 
 class IPCCTVSource(BaseVideoSource):
@@ -262,6 +312,10 @@ class IPCCTVSource(BaseVideoSource):
             settings.pipeline.frame_width,
             settings.pipeline.frame_height,
         )
+        self._stopped = False
+
+    def stop(self):
+        self._stopped = True
 
     def frames(self) -> Iterator[Frame]:
         if "phone_stream.html" in self.stream_url.lower() or self.stream_url.lower().endswith(".html"):
@@ -272,16 +326,19 @@ class IPCCTVSource(BaseVideoSource):
             )
             return
 
-        while True:
+        while not self._stopped:
             cap = cv2.VideoCapture(self.stream_url)
             if not cap.isOpened():
-                logger.error("[%s] Cannot open IP camera feed: %s. Retrying in 5s...", self.camera_id, self.stream_url)
-                time.sleep(5.0)
+                logger.warning("[%s] Cannot open IP camera feed: %s. Retrying in 4s...", self.camera_id, self.stream_url)
+                for _ in range(40):
+                    if self._stopped:
+                        return
+                    time.sleep(0.1)
                 continue
 
             logger.info("[%s] Connected to IP camera stream: %s", self.camera_id, self.stream_url)
             try:
-                while True:
+                while not self._stopped:
                     ok, img = cap.read()
                     if not ok or img is None:
                         logger.warning("[%s] IP camera frame drop / reconnecting...", self.camera_id)
@@ -293,7 +350,11 @@ class IPCCTVSource(BaseVideoSource):
                     yield self._make_frame(img)
             finally:
                 cap.release()
-            time.sleep(1.5)
+
+            for _ in range(15):
+                if self._stopped:
+                    return
+                time.sleep(0.1)
 
 
 def source_from_config(camera_cfg: dict) -> BaseVideoSource:

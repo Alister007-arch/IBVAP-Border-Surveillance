@@ -1,21 +1,24 @@
 # thresholds.yaml
 # ----------------
-# Override any of these values; all keys are optional — defaults are in settings.py.
+# Calibrated for High-FPS, Low-Latency Real-Time Border Surveillance & Fast Motion Tracking
 
 detection:
-  day_confidence: 0.35
-  night_confidence: 0.25
-  night_brightness_threshold: 60     # mean pixel brightness (0-255)
+  tier1_model: yolov8n.pt            # Ultra-fast CPU inference (~45ms @ 480px)
+  tier1_imgsz: 480                   # 480x480 resolution for crystal-clear object & item identification
+  day_confidence: 0.25               # High precision for humans, animals & desk items
+  night_confidence: 0.20
+  night_brightness_threshold: 60     # Mean pixel brightness (0-255)
   tier2_slice_height: 320
   tier2_slice_width: 320
   tier2_overlap_ratio: 0.2
   tier2_airspace_only: true
-  tier2_cadence: 2
-  tier3_min_contour_area: 250        # px² minimum blob to count as motion (calibrated for small targets)
+  tier2_cadence: 10                  # Sliced inference cadence to prevent CPU choking
+  tier3_min_contour_area: 200        # px² minimum blob to count as motion
+  detection_stride: 1                # 1 = Full real-time detection pass on every frame
 
 tracking:
-  max_lost_frames: 30
-  min_hits: 3
+  max_lost_frames: 40                # Retain track state during rapid high-speed traversal
+  min_hits: 1                        # Instant track lock on first detection (0-latency response)
 
 reid:
   embedding_cosine_threshold: 0.65
@@ -23,14 +26,15 @@ reid:
 
 alerts:
   group_distance_threshold: 100.0    # pixels within which two tracks form a group
-  group_velocity_threshold: 20.0
+  group_velocity_threshold: 18.0
   loitering_frames: 150
   boundary_crossing_priority: RED
   group_priority: AMBER
   unidentified_priority: GRAY
 
 pipeline:
-  target_fps: 15
+  target_fps: 180
+  async_inference: true              # Decoupled async inference loop for max FPS streaming
   frame_width: 854
   frame_height: 480
   preview_enabled: true

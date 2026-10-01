@@ -28,6 +28,7 @@ COLOR_PERSON = (0, 220, 0)         # Green
 COLOR_VEHICLE = (240, 120, 0)      # Deep Blue/Cyan
 COLOR_ANIMAL = (0, 215, 255)       # Yellow/Amber
 COLOR_DRONE = (0, 0, 255)          # Red
+COLOR_ITEM = (235, 175, 0)         # Sky Blue / Cyan (Everyday Objects & Desk Items)
 COLOR_LUGGAGE = (180, 0, 220)      # Purple
 COLOR_UNIDENTIFIED = (180, 180, 180)# Gray
 COLOR_FACE = (255, 255, 0)         # Cyan
@@ -43,6 +44,7 @@ CATEGORY_COLORS = {
     "Vehicle": COLOR_VEHICLE,
     "Animal": COLOR_ANIMAL,
     "Drone": COLOR_DRONE,
+    "Item": COLOR_ITEM,
     "Luggage": COLOR_LUGGAGE,
     "Unidentified": COLOR_UNIDENTIFIED,
 }
@@ -82,7 +84,9 @@ def draw_detections(
 
     # Draw virtual tripwire line
     if boundary_line is not None:
-        pt1, pt2 = boundary_line
+        raw_pt1, raw_pt2 = boundary_line
+        pt1 = (int(raw_pt1[0]), int(raw_pt1[1]))
+        pt2 = (int(raw_pt2[0]), int(raw_pt2[1]))
         cv2.line(img, pt1, pt2, fence_color, 2, cv2.LINE_AA)
         fence_label = "VIRTUAL FENCE: INTRUSION ACTIVE" if has_breach else "VIRTUAL FENCE: ARMED"
         cv2.putText(
@@ -98,35 +102,59 @@ def draw_detections(
 
         x1, y1, x2, y2 = (int(v) for v in det.bbox)
         is_breaching = det.track_id is not None and det.track_id in crossing_ids
+        is_sprinting = getattr(det, "is_sprinting", False)
+        is_unwanted = is_breaching or is_sprinting
 
         is_suspect_match = bool(
             getattr(det, "is_watchlist_match", False) and
             det.face_name and
+            "Civilian" not in det.face_name and
             "Unflagged" not in det.face_name
         )
 
         # Main box color
         if is_suspect_match:
             base_color = (0, 0, 255)  # Bright Red for Watchlist Suspect
-        elif is_breaching:
-            base_color = COLOR_CROSSING
+        elif det.category == "Weapon":
+            base_color = (0, 0, 255)  # Threat Red for Weapons & Sharp Items
+        elif det.category == "Person" and is_unwanted:
+            base_color = COLOR_CROSSING  # Orange-Red for Unwanted Infiltrators
+        elif det.category == "Person":
+            base_color = COLOR_PERSON    # Emerald Green for Humans
+        elif det.category == "Item":
+            base_color = COLOR_ITEM      # Vibrant Sky Blue for Desk / Everyday Items
+        elif det.category == "Animal":
+            base_color = COLOR_ANIMAL    # Amber Yellow for Animals
+        elif det.category == "Vehicle":
+            base_color = COLOR_VEHICLE   # Deep Blue for Vehicles
         else:
             base_color = CATEGORY_COLORS.get(det.category, (200, 200, 200))
 
-        cv2.rectangle(img, (x1, y1), (x2, y2), base_color, 3 if is_suspect_match else 2)
+        box_thickness = 3 if (is_suspect_match or det.category == "Weapon") else 2
+        cv2.rectangle(img, (x1, y1), (x2, y2), base_color, box_thickness)
 
-        # Primary label (includes Watchlist/Weapon/Vehicle classification)
+        # Primary label (displays real original name!)
         cat_label = det.category
         if is_suspect_match:
             s_name = getattr(det, "suspect_name", None) or det.face_name
-            cat_label = f"WATCHLIST: {s_name}"
+            cat_label = f"WANTED: {s_name}"
+        elif det.category == "Person":
+            if is_unwanted:
+                cat_label = "UNWANTED: Infiltrator" if is_breaching else "UNWANTED: Sprint Threat"
+            else:
+                cat_label = "PERSON"
+        elif det.category == "Item":
+            # Display real original item name! (e.g. Watch / Clock, Smartphone, Laptop, Water Bottle)
+            cat_label = det.sub_category or "Item"
+        elif det.category == "Animal":
+            cat_label = f"ANIMAL: {det.sub_category or 'Wildlife'}"
         elif det.category == "Weapon":
-            cat_label = f"WEAPON: {det.sub_category or 'Armed Threat'}"
+            cat_label = f"THREAT: {det.sub_category or 'Weapon'}"
         elif det.category == "Drone":
             cat_label = f"AIR THREAT: {det.sub_category or 'Drone / UAV'}"
         elif det.category == "Vehicle" and det.sub_category:
-            cat_label = f"Vehicle ({det.sub_category})"
-        elif det.sub_category and det.category in ["Animal", "Luggage"]:
+            cat_label = f"VEHICLE: {det.sub_category}"
+        elif det.sub_category and det.category in ["Luggage"]:
             cat_label = det.sub_category
 
         label_parts = [cat_label]
@@ -158,12 +186,15 @@ def draw_detections(
         # 3. Face Detection & FRS Overlay
         if det.face_detected and det.face_bbox:
             fx1, fy1, fx2, fy2 = (int(v) for v in det.face_bbox)
-            is_suspect_match = det.face_name and "%" in det.face_name and "Unflagged" not in det.face_name
-            face_color = (0, 0, 255) if is_suspect_match else (255, 200, 0)
+            is_suspect_match = bool(
+                det.face_name and "%" in det.face_name and
+                "Civilian" not in det.face_name and "Unflagged" not in det.face_name
+            )
+            face_color = (0, 0, 255) if is_suspect_match else (0, 220, 0)
             thickness = 2 if is_suspect_match else 1
             cv2.rectangle(img, (fx1, fy1), (fx2, fy2), face_color, thickness, cv2.LINE_AA)
-            if det.face_name and "Unflagged" not in det.face_name:
-                face_tag = f"FRS MATCH: {det.face_name}"
+            if is_suspect_match:
+                face_tag = f"[!] WANTED: {det.face_name}"
                 (ftw, fth), _ = cv2.getTextSize(face_tag, cv2.FONT_HERSHEY_SIMPLEX, 0.40, 1)
                 banner_top = max(0, fy1 - fth - 6)
                 cv2.rectangle(img, (fx1, banner_top), (fx1 + ftw + 8, fy1), (0, 0, 180), -1)

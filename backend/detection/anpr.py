@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -41,10 +42,12 @@ class ANPRDetector:
 
         # Try loading OpenCV plate cascade if available in this OpenCV build
         self._plate_cascade = None
-        if hasattr(cv2, "CascadeClassifier"):
+        cascade_cls = getattr(cv2, "CascadeClassifier", None)
+        cv2_data = getattr(cv2, "data", None)
+        if cascade_cls is not None and cv2_data is not None and hasattr(cv2_data, "haarcascades"):
             try:
-                plate_cascade_path = cv2.data.haarcascades + "haarcascade_russian_plate_number.xml"
-                casc = cv2.CascadeClassifier(plate_cascade_path)
+                plate_cascade_path = cv2_data.haarcascades + "haarcascade_russian_plate_number.xml"
+                casc = cascade_cls(plate_cascade_path)
                 if not casc.empty():
                     self._plate_cascade = casc
                     logger.info("[ANPR] Haar plate cascade loaded.")
@@ -52,6 +55,8 @@ class ANPRDetector:
                 logger.debug("[ANPR] Plate cascade skipped: %s", e)
         if self._plate_cascade is None:
             logger.info("[ANPR] Using morphological contour-gradient plate localization.")
+
+        self._plate_cache: Dict[int, Dict[str, Any]] = {}
 
     def _load_watchlist(self):
         try:
@@ -152,6 +157,12 @@ class ANPRDetector:
 
         fh, fw = frame_img.shape[:2]
         anpr_events = []
+        now = time.time()
+
+        # Prune stale plate cache entries (> 4.0s)
+        stale_keys = [k for k, v in self._plate_cache.items() if (now - v.get("ts", 0)) > 4.0]
+        for k in stale_keys:
+            self._plate_cache.pop(k, None)
 
         for det in vehicle_detections:
             if det.category != "Vehicle":
@@ -163,6 +174,28 @@ class ANPRDetector:
 
             vw, vh = x2 - x1, y2 - y1
             if vw < 50 or vh < 40:
+                continue
+
+            # FAST TRACK-CONTINUITY CACHE: If this vehicle track already had its plate read, reuse it
+            tid = det.track_id
+            if tid is not None and tid in self._plate_cache:
+                cached = self._plate_cache[tid]
+                cached["ts"] = now
+                plate_str = cached["plate_number"]
+                det.plate_number = plate_str
+                # Update relative plate box to current vehicle position
+                rx, ry, rw, rh = cached["rel_box"]
+                det.plate_bbox = (float(x1 + rx), float(y1 + ry), float(x1 + rx + rw), float(y1 + ry + rh))
+
+                anpr_events.append({
+                    "track_id": tid,
+                    "plate_number": plate_str,
+                    "vehicle_type": det.sub_category or "Vehicle",
+                    "is_suspect": cached["is_suspect"],
+                    "priority": cached["priority"],
+                    "reason": cached["reason"],
+                    "bbox": det.plate_bbox,
+                })
                 continue
 
             vehicle_crop = frame_img[y1:y2, x1:x2]
@@ -185,15 +218,28 @@ class ANPRDetector:
                 norm_plate = plate_str.replace(" ", "").upper()
                 is_suspect = norm_plate in self.suspect_plates
                 suspect_info = self.suspect_plates.get(norm_plate, {})
+                prio = suspect_info.get("priority", "RED" if is_suspect else "BLUE")
+                reason = suspect_info.get("reason", "Standard vehicle transit")
 
-                anpr_events.append({
+                event_dict = {
                     "track_id": det.track_id,
                     "plate_number": plate_str,
                     "vehicle_type": det.sub_category or "Vehicle",
                     "is_suspect": is_suspect,
-                    "priority": suspect_info.get("priority", "RED" if is_suspect else "BLUE"),
-                    "reason": suspect_info.get("reason", "Standard vehicle transit"),
+                    "priority": prio,
+                    "reason": reason,
                     "bbox": det.plate_bbox,
-                })
+                }
+                anpr_events.append(event_dict)
+
+                if tid is not None:
+                    self._plate_cache[tid] = {
+                        "ts": now,
+                        "plate_number": plate_str,
+                        "rel_box": (px, py, pw, ph),
+                        "is_suspect": is_suspect,
+                        "priority": prio,
+                        "reason": reason,
+                    }
 
         return anpr_events

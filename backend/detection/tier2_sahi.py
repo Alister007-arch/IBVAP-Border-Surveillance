@@ -10,7 +10,7 @@ Key Capabilities:
     are not lost to frame downscaling.
   - Airspace-Priority Tiling: slices the upper atmosphere / sky region (top 65% of frame)
     at native pixel scale, requiring only 2-4 tiles rather than 16+ full-frame tiles.
-  - Batched GPU/CPU inference in a single forward pass over shared YOLOv8 weights.
+  - Batched GPU/CPU inference in a single forward pass over shared YOLOv12 weights.
   - Multi-slice Non-Maximum Suppression (NMS) in OpenCV C++ engine (<0.1ms).
   - Smart Cadence Caching: runs every N frames with zero track dropouts.
 """
@@ -88,22 +88,23 @@ class Tier2SAHIDetector:
     def __init__(
         self,
         model: Any | None = None,
-        model_path: str = "yolov8n.pt",
+        model_path: str = "yolo12n.pt",
         device: str | None = None,
     ):
         self._device = device or os.environ.get("YOLO_DEVICE", "cpu")
+        self._half = True if self._device == "cuda" else False
 
         if model is not None:
-            logger.info("[Tier2] Reusing shared YOLO model instance for SAHI sliced inference.")
+            logger.info("[Tier2] Reusing shared YOLOv12 model instance for SAHI sliced inference.")
             self._model = model
         else:
             try:
                 from ultralytics import YOLO
-                logger.info("[Tier2] Loading YOLO checkpoint '%s' on device '%s'", model_path, self._device)
+                logger.info("[Tier2] Loading YOLOv12 checkpoint '%s' on device '%s'", model_path, self._device)
                 self._model = YOLO(model_path)
                 self._model.to(self._device)
             except Exception as exc:
-                logger.error("[Tier2] Failed to load YOLO for SAHI: %s", exc)
+                logger.error("[Tier2] Failed to load YOLOv12 for SAHI: %s", exc)
                 self._model = None
 
         self._class_names: Dict[int, str] = {}
@@ -114,10 +115,16 @@ class Tier2SAHIDetector:
         self._cached_detections: Dict[str, List[Detection]] = {}
         logger.info("[Tier2] Native Airspace Sliced Inference Engine initialized successfully.")
 
-    def detect(self, frame: Frame, confidence: float | None = None) -> List[Detection]:
+    def detect(
+        self,
+        frame: Frame,
+        confidence: float | None = None,
+        has_airspace_motion: bool = True,
+    ) -> List[Detection]:
         """
         Run sliced inference on the frame's airspace.
         Emits small aerial targets and drones with 1:1 pixel fidelity.
+        Uses motion gating: skips multi-slice forward passes when airspace has no motion.
         """
         if self._model is None:
             return []
@@ -130,27 +137,31 @@ class Tier2SAHIDetector:
         )
 
         self._frame_count += 1
-        cadence = getattr(cfg, "tier2_cadence", 2)
+        cadence = max(1, getattr(cfg, "tier2_cadence", 4))
         cam_id = frame.camera_id
 
-        # Skip frames to maintain 25-30 FPS, returning cached detections
-        if (self._frame_count % cadence != 0) and cam_id in self._cached_detections:
-            cached = self._cached_detections[cam_id]
-            refreshed: List[Detection] = []
-            for d in cached:
-                refreshed.append(
-                    Detection(
-                        category=d.category,
-                        sub_category=d.sub_category,
-                        confidence=d.confidence,
-                        bbox=d.bbox,
-                        source_tier=SOURCE_TIER2,
-                        camera_id=frame.camera_id,
-                        location=frame.location,
-                        timestamp=frame.timestamp,
+        # Fast return from cache if not cadence turn or if airspace has zero motion (unless periodic safety check)
+        is_cadence_turn = (self._frame_count % cadence == 0)
+        is_periodic_safety = (self._frame_count % (cadence * 4) == 0)
+
+        if cam_id in self._cached_detections:
+            if not is_cadence_turn or (not has_airspace_motion and not is_periodic_safety):
+                cached = self._cached_detections[cam_id]
+                refreshed: List[Detection] = []
+                for d in cached:
+                    refreshed.append(
+                        Detection(
+                            category=d.category,
+                            sub_category=d.sub_category,
+                            confidence=d.confidence,
+                            bbox=d.bbox,
+                            source_tier=SOURCE_TIER2,
+                            camera_id=frame.camera_id,
+                            location=frame.location,
+                            timestamp=frame.timestamp,
+                        )
                     )
-                )
-            return refreshed
+                return refreshed
 
         img = frame.img
         h, w = img.shape[:2]
@@ -177,13 +188,24 @@ class Tier2SAHIDetector:
 
         # 3. Batched inference across all airspace slices in a single forward pass
         try:
-            results = self._model.predict(
-                source=crops,
-                conf=max(0.18, conf * 0.75),  # slightly lower threshold on crops to catch distant drones
-                imgsz=slice_w,
-                verbose=False,
-                device=self._device,
-            )
+            try:
+                import torch
+                cm = torch.inference_mode()
+            except Exception:
+                import contextlib
+                cm = contextlib.nullcontext()
+
+            with cm:
+                kw = {
+                    "source": crops,
+                    "conf": max(0.18, conf * 0.75),
+                    "imgsz": slice_w,
+                    "verbose": False,
+                    "device": self._device,
+                }
+                if self._device == "cuda":
+                    kw["half"] = True
+                results = self._model.predict(**kw)
         except Exception as exc:
             logger.error("[Tier2][%s] Sliced inference error: %s", cam_id, exc)
             return []
@@ -195,10 +217,11 @@ class Tier2SAHIDetector:
 
         for i, res in enumerate(results):
             sx1, sy1, sx2, sy2 = slice_boxes[i]
-            if res.boxes is None or len(res.boxes) == 0:
+            res_boxes = getattr(res, "boxes", None)
+            if res_boxes is None or len(res_boxes) == 0:
                 continue
 
-            for box in res.boxes:
+            for box in res_boxes:
                 cls_idx = int(box.cls.item())
                 cls_name = self._class_names.get(cls_idx, str(cls_idx))
                 cls_lower = str(cls_name).lower().strip()
@@ -251,7 +274,9 @@ class Tier2SAHIDetector:
 
         detections: List[Detection] = []
         if len(indices) > 0:
-            for idx in indices.flatten():
+            flat_indices = np.array(indices).flatten()
+            for idx_raw in flat_indices:
+                idx = int(idx_raw)
                 gx1, gy1, gw, gh = raw_boxes_xywh[idx]
                 score = raw_confs[idx]
                 cls_lower = raw_classes[idx]

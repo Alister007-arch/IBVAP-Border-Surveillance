@@ -181,7 +181,7 @@ def build_pdf():
     story.append(Paragraph('1. Executive Summary & Project Abstract', h1_style))
     story.append(Paragraph(
         'The <b>Intelligent Border Video Analytics Platform (IBVAP)</b> is an edge-native, sovereign artificial intelligence surveillance system engineered to modernize India\'s border security infrastructure. Over 1.5 million legacy COTS (Commercial Off-The-Shelf) IP-CCTV cameras deployed across Border Out Posts (BOPs), tactical checkposts, and strategic defense perimeters currently function as passive video recorders requiring exhausting 24/7 human sentry observation. '
-        '<b>IBVAP solves this crisis through a 100% software-only AI intelligence overlay</b> that transforms standard RTSP/HTTP video feeds into an autonomous perimeter defense network with <b>zero hardware replacement costs</b>. The platform unifies multiclass YOLOv8 human/vehicle detection, ByteTrack spatial-temporal persistence, ArcFace Facial Recognition System (FRS), Automatic Number Plate Recognition (ANPR), and dynamic Virtual Fence tripwires. '
+        '<b>IBVAP solves this crisis through a 100% software-only AI intelligence overlay</b> that transforms standard RTSP/HTTP video feeds into an autonomous perimeter defense network with <b>zero hardware replacement costs</b>. The platform unifies multiclass YOLOv12 human/vehicle detection, ByteTrack spatial-temporal persistence, ArcFace Facial Recognition System (FRS), Automatic Number Plate Recognition (ANPR), and dynamic Virtual Fence tripwires. '
         'Integrated with a military-grade React Command & Control (C2) dashboard, dual HTTP/HTTPS streaming, Web Audio API threat acoustic alarms, and a SHA-256 tamper-evident forensic audit ledger, IBVAP delivers a zero-latency (<200 ms) tactical threat-interdiction system for the Border Security Force (BSF) and Ministry of Home Affairs.',
         body_style
     ))
@@ -199,7 +199,7 @@ def build_pdf():
     story.append(Paragraph('3. Proposed Solution Architecture (IBVAP 6-Tier Pipeline)', h1_style))
     tiers_data = [
         [Paragraph('<b>Tier / Module</b>', cell_h), Paragraph('<b>Underlying Technology</b>', cell_h), Paragraph('<b>Operational Function & Capability</b>', cell_h)],
-        [Paragraph('<b>Tier 1: Detection</b>', cell_b), Paragraph('Ultralytics YOLOv8 (Edge)', cell_style), Paragraph('Detects persons, vehicles (trucks, cars, motorbikes), and luggage with class confidence tuning.', cell_style)],
+        [Paragraph('<b>Tier 1: Detection</b>', cell_b), Paragraph('Ultralytics YOLOv12 (Edge)', cell_style), Paragraph('Detects persons, vehicles (trucks, cars, motorbikes), and luggage with class confidence tuning.', cell_style)],
         [Paragraph('<b>Tier 2: Tracking</b>', cell_b), Paragraph('ByteTrack + Velocity Vectors', cell_style), Paragraph('Maintains consistent tracking IDs through occlusion; computes real-time velocity vectors.', cell_style)],
         [Paragraph('<b>Tier 3: Motion Fallback</b>', cell_b), Paragraph('OpenCV MOG2 Background Subtractor', cell_style), Paragraph('Catches subtle movement in rain, dense fog, or camouflage when bounding boxes fail.', cell_style)],
         [Paragraph('<b>Tier 4: Threat Engines</b>', cell_b), Paragraph('Virtual Fence & Behavioral AI', cell_style), Paragraph('Calculates polygonal perimeter breaches, loitering (>7s), sprinting incursions & unattended bags.', cell_style)],
@@ -238,7 +238,7 @@ def build_pdf():
     story.append(Paragraph('Detailed Layer-by-Layer Architectural Specifications:', h2_style))
     story.append(Paragraph('• <b>Layer 1 (Physical Sensor & Ingestion):</b> Connects transparently to legacy IP-CCTV cameras over RTSP/H.264, checkpoint USB webcams via OpenCV, and roving patrol smartphones via TLS 1.3 WebSockets (WSS), achieving 100% camera agnosticism.', bullet_style))
     story.append(Paragraph('• <b>Layer 2 (Adaptive Pre-Processing & Conditioning):</b> Computes mean frame luminance in real-time. When ambient lux drops below 35, the system automatically activates Contrast Limited Adaptive Histogram Equalization (CLAHE) and boosts motion subtractor sensitivity.', bullet_style))
-    story.append(Paragraph('• <b>Layer 3 (Dual-Engine Detection & Tracking Core):</b> Concurrently executes deep-learning object localization (YOLOv8) with statistical motion modeling (MOG2). Tracks are temporally stabilized using ByteTrack Kalman filtering to eliminate ID-switches.', bullet_style))
+    story.append(Paragraph('• <b>Layer 3 (Dual-Engine Detection & Tracking Core):</b> Concurrently executes deep-learning object localization (YOLOv12) with statistical motion modeling (MOG2). Tracks are temporally stabilized using ByteTrack Kalman filtering to eliminate ID-switches.', bullet_style))
     story.append(Paragraph('• <b>Layer 4 (Tactical Threat Intelligence Suite):</b> High-speed analytical engines evaluate polygonal boundary breaches, match 512-D face vectors against BSF watchlists, read vehicle plates against BOLO registries, and flag loitering (>7s) or sprinting.', bullet_style))
     story.append(Paragraph('• <b>Layer 5 (Blockchain & Forensic Audit Ledger):</b> Computes SHA-256 cryptographic digests of every incident snapshot and metadata payload, logging records into an immutable, append-only SQLite ledger to ensure tamper-evident forensic validity.', bullet_style))
     story.append(Paragraph('• <b>Layer 6 (Command & Control Tactical Dispatch):</b> Broadcasts annotated frames and priority alerts over WebSockets (<200 ms latency) to a tactical React C2 console equipped with multi-frequency Web Audio threat sirens.', bullet_style))
@@ -249,7 +249,7 @@ def build_pdf():
         [Paragraph('<b>Layer</b>', cell_h), Paragraph('<b>Technology Components</b>', cell_h), Paragraph('<b>Role in Platform</b>', cell_h)],
         [Paragraph('Backend Core', cell_b), Paragraph('Python 3.11+, FastAPI, Uvicorn, AsyncIO', cell_style), Paragraph('High-throughput REST API & multi-stream WebSocket server.', cell_style)],
         [Paragraph('Dual-Server Gateway', cell_b), Paragraph('HTTP (Port 8000) & HTTPS/WSS (Port 8443)', cell_style), Paragraph('Simultaneous C2 dashboard serving & encrypted patrol phone streaming.', cell_style)],
-        [Paragraph('AI & Computer Vision', cell_b), Paragraph('Ultralytics YOLOv8, OpenCV 4.9+, MOG2', cell_style), Paragraph('Edge object detection, CLAHE contrast boost & motion fallback.', cell_style)],
+        [Paragraph('AI & Computer Vision', cell_b), Paragraph('Ultralytics YOLOv12, OpenCV 4.9+, MOG2', cell_style), Paragraph('Edge object detection, CLAHE contrast boost & motion fallback.', cell_style)],
         [Paragraph('Biometrics & ANPR', cell_b), Paragraph('InsightFace ArcFace 512-D, Morphology OCR', cell_style), Paragraph('Suspect facial identification & BOLO license plate recognition.', cell_style)],
         [Paragraph('Tactical Frontend', cell_b), Paragraph('React 18, Vite 5, Tailwind CSS, Lucide', cell_style), Paragraph('Military-grade dark console with live video grid & threat alarms.', cell_style)],
         [Paragraph('Hardware (Minimum)', cell_b), Paragraph('Intel Core i5/i7 (8th Gen+), 8-16 GB RAM', cell_style), Paragraph('Runs 3–5 concurrent camera streams at 15–25 FPS without external GPU.', cell_style)],
@@ -294,7 +294,7 @@ def build_pdf():
         body_style
     ))
     story.append(Paragraph(
-        '• <b>Stage 3: Dual AI Detection & Kalman Trajectory Tracking:</b> Frames are concurrently passed to Ultralytics YOLOv8 for multiclass semantic bounding box detection and MOG2 for foreground motion mask extraction. A detection merger eliminates redundant candidates. The ByteTrack engine then matches detections against active tracklets using Hungarian association and Kalman filter state estimation, producing persistent track IDs and directional velocity vectors.',
+        '• <b>Stage 3: Dual AI Detection & Kalman Trajectory Tracking:</b> Frames are concurrently passed to Ultralytics YOLOv12 for multiclass semantic bounding box detection and MOG2 for foreground motion mask extraction. A detection merger eliminates redundant candidates. The ByteTrack engine then matches detections against active tracklets using Hungarian association and Kalman filter state estimation, producing persistent track IDs and directional velocity vectors.',
         body_style
     ))
     story.append(Paragraph(
@@ -383,7 +383,7 @@ def build_pdf():
     risk_data = [
         [Paragraph('<b>Identified Risk / Threat</b>', cell_h), Paragraph('<b>Severity</b>', cell_h), Paragraph('<b>Implemented Engineering Defense in IBVAP</b>', cell_h)],
         [Paragraph('Zero-Lux / Rain / Dense Fog', cell_b), Paragraph('<font color="#DC2626"><b>HIGH</b></font>', cell_style), Paragraph('Luminance monitoring dynamically boosts CLAHE contrast and switches to MOG2 background motion subtraction.', cell_style)],
-        [Paragraph('False Alarms (Animals, Foliage)', cell_b), Paragraph('<font color="#DC2626"><b>HIGH</b></font>', cell_style), Paragraph('Two-stage validation: YOLOv8 semantic classification eliminates non-target classes; trajectory vectors confirm deliberate intrusions.', cell_style)],
+        [Paragraph('False Alarms (Animals, Foliage)', cell_b), Paragraph('<font color="#DC2626"><b>HIGH</b></font>', cell_style), Paragraph('Two-stage validation: YOLOv12 semantic classification eliminates non-target classes; trajectory vectors confirm deliberate intrusions.', cell_style)],
         [Paragraph('Remote BOP Bandwidth Loss', cell_b), Paragraph('<font color="#D97706"><b>MEDIUM</b></font>', cell_style), Paragraph('100% Edge Autonomy: Full inference executes locally on BOP mini-PC; alert queues persist locally during network blackouts.', cell_style)],
         [Paragraph('Occluded Faces & Dirty Plates', cell_b), Paragraph('<font color="#D97706"><b>MEDIUM</b></font>', cell_style), Paragraph('Cross-Camera Re-ID color-histogram matching maintains identity persistence across camera handoffs despite occlusion.', cell_style)],
         [Paragraph('Insider Forensic Tampering', cell_b), Paragraph('<font color="#DC2626"><b>HIGH</b></font>', cell_style), Paragraph('SHA-256 sequential cryptographic hash chaining ensures unauthorized deletion or alteration of snapshots is mathematically detectable.', cell_style)]
@@ -441,7 +441,7 @@ def build_pdf():
 
     story.append(Spacer(1, 4))
     story.append(Paragraph('13. Research References & Working Prototype Validation', h1_style))
-    story.append(Paragraph('1. <b>Object Detection:</b> Jocher, G., et al. (2023). <i>Ultralytics YOLOv8 Architecture</i>. <font color="#0066CC">https://github.com/ultralytics/ultralytics</font>', bullet_style))
+    story.append(Paragraph('1. <b>Object Detection:</b> Jocher, G., et al. (2025). <i>Ultralytics YOLOv12 Architecture</i>. <font color="#0066CC">https://github.com/ultralytics/ultralytics</font>', bullet_style))
     story.append(Paragraph('2. <b>Multi-Object Tracking:</b> Zhang, Y., et al. (2022). <i>ByteTrack: Multi-Object Tracking by Associating Every Detection Box</i>. ECCV 2022. <font color="#0066CC">https://arxiv.org/abs/2110.06864</font>', bullet_style))
     story.append(Paragraph('3. <b>Deep Metric Learning (FRS):</b> Deng, J., et al. (2019). <i>ArcFace: Additive Angular Margin Loss for Deep Face Recognition</i>. CVPR 2019. <font color="#0066CC">https://arxiv.org/abs/1801.07698</font>', bullet_style))
     story.append(Paragraph('4. <b>Government Directives:</b> MHA Comprehensive Integrated Border Management System (CIBMS) Vision Framework & SIH 2026 PS ID 26187.', bullet_style))

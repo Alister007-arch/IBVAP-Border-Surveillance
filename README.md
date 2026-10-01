@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Vite + React](https://img.shields.io/badge/Frontend-React%20%7C%20TailwindCSS-cyan)](frontend/)
-[![YOLOv8](https://img.shields.io/badge/AI%20Model-YOLOv8%20%7C%20SAHI%20%7C%20MOG2-red)](https://ultralytics.com)
+[![YOLOv12](https://img.shields.io/badge/AI%20Model-YOLOv12%20%7C%20SAHI%20%7C%20MOG2-red)](https://ultralytics.com)
 
 > **Autonomous Multi-Tier Edge Surveillance & Threat Interception Platform**  
 > Designed for Border Security, Critical Perimeter Defense, and Real-Time Multi-Sensor Tactical Coordination.
@@ -22,7 +22,7 @@ It integrates a 3-tier cascade detection pipeline, face recognition & automated 
 ## 🚀 Key Capabilities
 
 ### 1. 3-Tier Multi-Cascade AI Engine
-- **Tier-1 YOLOv8 Deep Inference**: High-precision detection of humans, vehicles, knives, and weapons with ByteTrack persistence.
+- **Tier-1 YOLOv12 Deep Inference**: Attention-centric high-precision detection of humans, vehicles, knives, and weapons with ByteTrack persistence and optimized high-FPS throughput.
 - **Tier-2 Native SAHI Sliced Airspace Inference**: Native 320x320 sliced inference over upper airspace coordinates to detect small, distant aerial threats (Drones, UAVs, Quadcopters) at 50–150m without shrinking down pixels.
 - **Tier-3 Adaptive MOG2 Motion Fallback**: Dynamic learning rate adaptation and shadow elimination to detect crawling infiltrators and camouflaged moving targets when thermal or optical contrast is low.
 
@@ -50,7 +50,7 @@ It integrates a 3-tier cascade detection pipeline, face recognition & automated 
 graph TD
     A[CCTV / USB Webcam / Mobile Patrol] --> B[Video Ingestion & Hardware Buffer]
     B --> C[NightSwitcher CLAHE Hysteresis]
-    C --> D1[Tier-1 YOLOv8 Detection]
+    C --> D1[Tier-1 YOLOv12 Detection]
     C --> D2[Tier-2 SAHI Sliced Airspace]
     C --> D3[Tier-3 Adaptive MOG2 Motion]
     D1 & D2 & D3 --> E[Detection Merger & ByteTrack]

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Shield,
   AlertTriangle,
@@ -12,6 +12,7 @@ import {
   Volume2,
   VolumeX,
   Radio,
+  Crosshair,
 } from "lucide-react";
 
 /**
@@ -33,6 +34,9 @@ export default function StatusStrip({
   onOpenAddCamera,
   onOpenEventLog,
   onOpenWatchlist,
+  onOpenTacticalMap,
+  onOpenDossier,
+  voiceAssistant,
   onSystemStart,
   onSystemStop,
   onSystemReset,
@@ -134,6 +138,24 @@ export default function StatusStrip({
         {/* ── Action Buttons ── */}
         <div className="flex items-center gap-1.5">
           <button
+            onClick={onOpenTacticalMap}
+            className="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 font-bold px-2.5 py-1.5 rounded-lg border border-emerald-600/80 flex items-center gap-1.5 transition shadow-md shadow-emerald-950/40"
+            title="Open Military GIS Tactical Radar & Sector Map"
+          >
+            <Crosshair className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Tactical Radar</span>
+          </button>
+
+          <button
+            onClick={onOpenDossier}
+            className="bg-amber-950/70 hover:bg-amber-900 text-amber-300 font-bold px-2.5 py-1.5 rounded-lg border border-amber-600/70 flex items-center gap-1.5 transition shadow"
+            title="Classified Forensic Incident Dossier & Evidence Seal"
+          >
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">SITREP Dossier</span>
+          </button>
+
+          <button
             onClick={onOpenAddCamera}
             className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-blue-600/20"
           >
@@ -192,6 +214,9 @@ export default function StatusStrip({
           <RotateCcw className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{confirmReset ? "Confirm Reset?" : "Reset"}</span>
         </button>
+
+        {/* ── Voice Assistant Slot ── */}
+        {voiceAssistant}
 
         {/* ── Mute / Unmute alarm ── */}
         <button
