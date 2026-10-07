@@ -1,327 +1,5 @@
 [
   {
-    "dispatch_id": "SOS-671177",
-    "timestamp": "2026-09-30T20:37:51.177842+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "38s",
-    "heading": "298\u00b0 NNE (Lateral)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-672780",
-    "timestamp": "2026-09-30T20:37:52.780321+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 24s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-675239",
-    "timestamp": "2026-09-30T20:37:55.239286+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "38s",
-    "heading": "226\u00b0 NW (Lateral)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-676860",
-    "timestamp": "2026-09-30T20:37:56.860898+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 28s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-679267",
-    "timestamp": "2026-09-30T20:37:59.267054+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "37s",
-    "heading": "313\u00b0 NE (Lateral)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-680903",
-    "timestamp": "2026-09-30T20:38:00.903735+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 32s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-683373",
-    "timestamp": "2026-09-30T20:38:03.373062+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "37s",
-    "heading": "262\u00b0 N (Lateral)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-685009",
-    "timestamp": "2026-09-30T20:38:05.009105+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 36s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-687396",
-    "timestamp": "2026-09-30T20:38:07.396389+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "38s",
-    "heading": "341\u00b0 ENE (Lateral)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-689076",
-    "timestamp": "2026-09-30T20:38:09.076600+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 40s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-691425",
-    "timestamp": "2026-09-30T20:38:11.425238+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "37s",
-    "heading": "353\u00b0 E (Lateral)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-693173",
-    "timestamp": "2026-09-30T20:38:13.173053+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 44s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-695562",
-    "timestamp": "2026-09-30T20:38:15.562280+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "34s",
-    "heading": "160\u00b0 WSW (Inbound)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-697521",
-    "timestamp": "2026-09-30T20:38:17.521656+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 48s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-699699",
-    "timestamp": "2026-09-30T20:38:19.699100+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "34s",
-    "heading": "157\u00b0 WSW (Inbound)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-701569",
-    "timestamp": "2026-09-30T20:38:21.569823+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 52s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-703734",
-    "timestamp": "2026-09-30T20:38:23.734696+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "35s",
-    "heading": "158\u00b0 WSW (Inbound)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-705684",
-    "timestamp": "2026-09-30T20:38:25.684270+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 56s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-708208",
-    "timestamp": "2026-09-30T20:38:28.208900+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "36s",
-    "heading": "156\u00b0 WSW (Inbound)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-709756",
-    "timestamp": "2026-09-30T20:38:29.756046+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 61s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-712291",
-    "timestamp": "2026-09-30T20:38:32.291825+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "37s",
-    "heading": "155\u00b0 WSW (Inbound)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-713809",
-    "timestamp": "2026-09-30T20:38:33.809925+00:00",
-    "category": "Suspicious Activity",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 65s",
-    "predicted_eta": "Nones",
-    "heading": null,
-    "intercept_sector": null,
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
-    "dispatch_id": "SOS-716430",
-    "timestamp": "2026-09-30T20:38:36.430372+00:00",
-    "category": "Face Recognition",
-    "location": "Command Post (Integrated USB Webcam)",
-    "description": "FRS Suspect Confirmed: divyanshu (92% Match) - terrorist",
-    "predicted_eta": "38s",
-    "heading": "350\u00b0 E (Lateral)",
-    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
-    "status": "DISPATCHED_TO_QRF",
-    "channels": [
-      "TACTICAL_SIMULATOR"
-    ]
-  },
-  {
     "dispatch_id": "SOS-130840",
     "timestamp": "2026-09-30T20:45:30.840453+00:00",
     "category": "Manual QRF Command",
@@ -834,6 +512,328 @@
     "predicted_eta": "18s",
     "heading": "76\u00b0 SSE (Inbound)",
     "intercept_sector": "Buffer Zone Sector-5 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-824259",
+    "timestamp": "2026-10-07T06:17:04.259370+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "26s",
+    "heading": "0\u00b0 E (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-829221",
+    "timestamp": "2026-10-07T06:17:09.221478+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "28s",
+    "heading": "341\u00b0 ENE (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-829223",
+    "timestamp": "2026-10-07T06:17:09.223690+00:00",
+    "category": "Suspicious Activity",
+    "location": "Mobile Patrol (Lap)",
+    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 20s",
+    "predicted_eta": "Nones",
+    "heading": null,
+    "intercept_sector": null,
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-833235",
+    "timestamp": "2026-10-07T06:17:13.235556+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "28s",
+    "heading": "186\u00b0 W (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-833237",
+    "timestamp": "2026-10-07T06:17:13.237861+00:00",
+    "category": "Suspicious Activity",
+    "location": "Mobile Patrol (Lap)",
+    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 24s",
+    "predicted_eta": "Nones",
+    "heading": null,
+    "intercept_sector": null,
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-837237",
+    "timestamp": "2026-10-07T06:17:17.237318+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "34s",
+    "heading": "244\u00b0 NNW (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-837239",
+    "timestamp": "2026-10-07T06:17:17.239893+00:00",
+    "category": "Suspicious Activity",
+    "location": "Mobile Patrol (Lap)",
+    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 28s",
+    "predicted_eta": "Nones",
+    "heading": null,
+    "intercept_sector": null,
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-841241",
+    "timestamp": "2026-10-07T06:17:21.241087+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "30s",
+    "heading": "337\u00b0 ENE (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-845239",
+    "timestamp": "2026-10-07T06:17:25.239878+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "33s",
+    "heading": "301\u00b0 NNE (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-850230",
+    "timestamp": "2026-10-07T06:17:30.230036+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "29s",
+    "heading": "329\u00b0 ENE (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-854254",
+    "timestamp": "2026-10-07T06:17:34.254635+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "29s",
+    "heading": "295\u00b0 NNE (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-859261",
+    "timestamp": "2026-10-07T06:17:39.261978+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "27s",
+    "heading": "341\u00b0 ENE (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-859264",
+    "timestamp": "2026-10-07T06:17:39.264690+00:00",
+    "category": "Suspicious Activity",
+    "location": "Mobile Patrol (Lap)",
+    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 20s",
+    "predicted_eta": "Nones",
+    "heading": null,
+    "intercept_sector": null,
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-864230",
+    "timestamp": "2026-10-07T06:17:44.230291+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "21s",
+    "heading": "158\u00b0 WSW (Inbound)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-868258",
+    "timestamp": "2026-10-07T06:17:48.258413+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "30s",
+    "heading": "260\u00b0 N (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-873252",
+    "timestamp": "2026-10-07T06:17:53.252712+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "21s",
+    "heading": "31\u00b0 ESE (Inbound)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-878229",
+    "timestamp": "2026-10-07T06:17:58.229675+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "21s",
+    "heading": "78\u00b0 SSE (Inbound)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-882235",
+    "timestamp": "2026-10-07T06:18:02.235612+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "21s",
+    "heading": "134\u00b0 SW (Inbound)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-883229",
+    "timestamp": "2026-10-07T06:18:03.229474+00:00",
+    "category": "Suspicious Activity",
+    "location": "Mobile Patrol (Lap)",
+    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 20s",
+    "predicted_eta": "Nones",
+    "heading": null,
+    "intercept_sector": null,
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-886270",
+    "timestamp": "2026-10-07T06:18:06.270819+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "21s",
+    "heading": "107\u00b0 SSW (Inbound)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-887246",
+    "timestamp": "2026-10-07T06:18:07.246829+00:00",
+    "category": "Suspicious Activity",
+    "location": "Mobile Patrol (Lap)",
+    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 24s",
+    "predicted_eta": "Nones",
+    "heading": null,
+    "intercept_sector": null,
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-891248",
+    "timestamp": "2026-10-07T06:18:11.248659+00:00",
+    "category": "Face Recognition",
+    "location": "Mobile Patrol (Lap)",
+    "description": "FRS Suspect Confirmed: Ayush (92% Match) - CM",
+    "predicted_eta": "32s",
+    "heading": "235\u00b0 NW (Lateral)",
+    "intercept_sector": "Buffer Zone Sector-2 (Post Alpha)",
+    "status": "DISPATCHED_TO_QRF",
+    "channels": [
+      "TACTICAL_SIMULATOR"
+    ]
+  },
+  {
+    "dispatch_id": "SOS-891252",
+    "timestamp": "2026-10-07T06:18:11.252978+00:00",
+    "category": "Suspicious Activity",
+    "location": "Mobile Patrol (Lap)",
+    "description": "Suspicious Activity: Person #1 loitering in border perimeter for 28s",
+    "predicted_eta": "Nones",
+    "heading": null,
+    "intercept_sector": null,
     "status": "DISPATCHED_TO_QRF",
     "channels": [
       "TACTICAL_SIMULATOR"

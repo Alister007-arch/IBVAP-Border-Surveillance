@@ -104,9 +104,6 @@ export default function StatusStrip({
             <span className="text-[10px] bg-slate-800 text-slate-300 font-medium px-2 py-0.5 rounded border border-slate-700 hidden sm:inline">
               Intelligent Border Video Analytics Platform
             </span>
-            <span className="text-[10px] bg-blue-900/60 text-blue-300 font-mono px-1.5 py-0.5 rounded border border-blue-700/50 font-bold">
-              SIH26187
-            </span>
             <span className="text-[10px] bg-emerald-950 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-700/50 font-semibold hidden md:inline">
               FRS &amp; ANPR READY
             </span>
