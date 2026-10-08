@@ -1,6 +1,5 @@
 # IBVAP — Intelligent Border Video Analytics Platform
 
-
 > **Autonomous Multi-Tier Edge Surveillance & Threat Interception Platform**  
 > Designed for Border Security, Critical Perimeter Defense, and Real-Time Multi-Sensor Tactical Coordination.
 
@@ -58,7 +57,7 @@ python backend/run_server.py # Start the Dual-Port Surveillance Server
 - **HTTPS Mobile Patrol Stream**: `https://<YOUR_LAN_IP>:8443/phone_stream.html`
 
 ### 3. Frontend Setup
-In a new terminal : 
+In a new terminal, go to root directory : 
 ```bash
 cd frontend
 npm install
